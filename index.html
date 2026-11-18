@@ -28,22 +28,23 @@
 
     <!-- Setup Gemini API Key -->
     <section id="boxApiKey" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
-      <div id="apiKeyInputMode" class="hidden space-y-2">
+      <div id="apiKeyInputMode" class="space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700">🔑 Gemini AI API Key (AQ. / AIza...)</span>
-          <a href="https://aistudio.google.com/apikey" target="_blank" class="text-[11px] text-emerald-700 font-semibold underline">Google AI Studio →</a>
+          <span class="text-xs font-bold text-slate-700">🔑 Tempel API Key AI Studio (AIzaSy...)</span>
+          <a href="https://aistudio.google.com/apikey" target="_blank" class="text-[11px] text-emerald-700 font-semibold underline">Ambil Key AI Studio →</a>
         </div>
         <div class="flex gap-2">
-          <input type="password" id="inputGeminiKey" placeholder="Tempel AQ.... atau AIzaSy... di sini"
+          <input type="password" id="inputGeminiKey" placeholder="Tempel AIzaSy... di sini"
             class="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-600" />
-          <button onclick="simpanGeminiKey()" class="bg-slate-900 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg">
-            Simpan
+          <button id="btnSimpanKey" onclick="simpanDanTesKey()" class="bg-slate-900 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shrink-0">
+            Simpan & Tes
           </button>
         </div>
+        <p class="text-[10px] text-slate-500">Key tersimpan aman di browser HP.</p>
       </div>
 
-      <div id="apiKeyReadyMode" class="flex items-center justify-between text-xs">
-        <span class="font-semibold text-emerald-700" id="labelEngineAktif">✅ AI Vision Aktif (Gemini 2.5 Flash)</span>
+      <div id="apiKeyReadyMode" class="hidden flex items-center justify-between text-xs">
+        <span class="font-semibold text-emerald-700">✅ AI Vision Aktif (Gemini 2.5 Flash)</span>
         <button onclick="ubahGeminiKey()" class="text-slate-500 underline">Ganti API Key</button>
       </div>
     </section>
@@ -64,7 +65,7 @@
       <p class="text-xs text-slate-500 mt-2" id="infoPesertaAktif">Memuat data DB...</p>
     </section>
 
-    <!-- Step 2: Foto Kertas Absen (3 Kolom: Nama, Kelas, TTD) -->
+    <!-- Step 2: Foto Kertas Absen -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
       <div>
         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Foto Kertas Absen (Nama • Kelas • TTD)</h2>
@@ -111,7 +112,7 @@
         <p class="text-[11px] text-emerald-600">Biasanya memakan waktu 3–6 detik</p>
       </div>
 
-      <!-- Kotak Error Permanen Jika Terjadi Masalah -->
+      <!-- Kotak Error Permanen -->
       <div id="boxErrorAI" class="hidden bg-red-50 border border-red-300 rounded-xl p-3 text-xs text-red-800 space-y-1">
         <p class="font-bold">⚠️ Detail Error AI:</p>
         <p id="textErrorAI" class="font-mono text-[11px] break-words"></p>
@@ -145,7 +146,7 @@
         </div>
       </div>
 
-      <!-- Blok 3A: Koreksi Kilat Yang Tidak Ada TTD / Belum Diisi -->
+      <!-- Blok 3A: Koreksi Kilat -->
       <div class="bg-white p-4 rounded-xl shadow-sm border-2 border-amber-300 space-y-3">
         <div class="flex items-center justify-between gap-2">
           <div>
@@ -160,7 +161,7 @@
         <div id="listTanpaTTD" class="divide-y divide-slate-100"></div>
       </div>
 
-      <!-- Blok 3B: Semua Urutan Hasil Pencocokan AI -->
+      <!-- Blok 3B: Semua Hasil -->
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
         <div class="flex items-center justify-between">
           <div>
@@ -197,11 +198,8 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbxHFjrh4q4VSUwA0s03OyRFfel8s78e0hP4YbzY-AQSCLiU_tcMepdrxhysEj6R4-ZWnw/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
-    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v4';
-    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_api_key_v4';
-
-    // Default Key Vertex AI Express (Project 974922606408)
-    const DEFAULT_GEMINI_KEY = ['AQ.Ab8RN6LIKfg5gcpST9xi9X0', 'usp7Mlv18_K0AjJK9MHTANMEwLQ'].join('');
+    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v7';
+    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_clean_key_v7';
 
     let rawJadwal = [];
     let rawPeserta = [];
@@ -229,12 +227,9 @@
       el._timer = setTimeout(() => el.classList.add('hidden'), duration);
     }
 
-    // ==========================================
-    // 1. MANAJEMEN GEMINI API KEY (AQ. & AIza...)
-    // ==========================================
     function getActiveGeminiKey() {
       const saved = localStorage.getItem(GEMINI_KEY_STORAGE);
-      return (saved && saved.trim().length > 15) ? saved.trim() : DEFAULT_GEMINI_KEY;
+      return (saved && saved.trim().startsWith('AIza')) ? saved.trim() : '';
     }
 
     function cekStatusApiKey() {
@@ -242,8 +237,6 @@
       if (key) {
         document.getElementById('apiKeyInputMode').classList.add('hidden');
         document.getElementById('apiKeyReadyMode').classList.remove('hidden');
-        const modeLabel = key.startsWith('AQ.') ? 'Vertex Express' : 'AI Studio';
-        document.getElementById('labelEngineAktif').textContent = `✅ AI Vision Aktif (${modeLabel} • Gemini 2.5 Flash)`;
       } else {
         document.getElementById('apiKeyInputMode').classList.remove('hidden');
         document.getElementById('apiKeyReadyMode').classList.add('hidden');
@@ -251,16 +244,38 @@
       updateTombolProses();
     }
 
-    function simpanGeminiKey() {
+    async function simpanDanTesKey() {
       const val = document.getElementById('inputGeminiKey').value.trim();
-      if (!val.startsWith('AQ.') && !val.startsWith('AIza')) {
-        showToast('Format key tidak valid (harus diawali AQ. atau AIza...)');
+      if (!val.startsWith('AIza')) {
+        showToast('Key harus dari AI Studio (diawali AIzaSy...)');
         return;
       }
-      localStorage.setItem(GEMINI_KEY_STORAGE, val);
+
+      const btn = document.getElementById('btnSimpanKey');
+      btn.disabled = true;
+      btn.textContent = 'Mengetes...';
       document.getElementById('boxErrorAI').classList.add('hidden');
-      cekStatusApiKey();
-      showToast('API Key tersimpan di browser HP!');
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(val)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'OK' }] }] })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message || 'Key ditolak Google.');
+
+        localStorage.setItem(GEMINI_KEY_STORAGE, val);
+        cekStatusApiKey();
+        showToast('✅ API Key valid & tersimpan!');
+      } catch (err) {
+        document.getElementById('textErrorAI').textContent = err.message;
+        document.getElementById('boxErrorAI').classList.remove('hidden');
+        showToast('Gagal memvalidasi key.', 4000);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Simpan & Tes';
+      }
     }
 
     function ubahGeminiKey() {
@@ -270,7 +285,7 @@
     }
 
     // ==========================================
-    // 2. SINKRONISASI DB GOOGLE SHEETS
+    // SINKRONISASI DB & FOTO
     // ==========================================
     function terapkanDataKeUI(data, sumberLabel) {
       rawJadwal = data.jadwal || [];
@@ -344,9 +359,6 @@
       updateTombolProses();
     }
 
-    // ==========================================
-    // 3. UPLOAD & KOMPRESI FOTO
-    // ==========================================
     function compressImageToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -366,11 +378,7 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
             const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-            resolve({
-              dataUrl,
-              base64: dataUrl.split(',')[1],
-              mimeType: 'image/jpeg'
-            });
+            resolve({ dataUrl, base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
           };
           img.onerror = reject;
           img.src = ev.target.result;
@@ -431,41 +439,12 @@
     }
 
     // ==========================================
-    // 4. GEMINI VISION AI (VERTEX EXPRESS & AI STUDIO)
+    // GEMINI AI STUDIO VISION
     // ==========================================
-    async function callGeminiEndpoint(apiKey, payloadBody) {
-      const urls = apiKey.startsWith('AQ.')
-        ? [
-            `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-            `https://aiplatform.googleapis.com/v1beta1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`
-          ]
-        : [
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`
-          ];
-
-      let lastError = 'Gagal menghubungi server AI.';
-
-      for (const url of urls) {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payloadBody)
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          return data;
-        }
-        lastError = data.error?.message || `HTTP ${response.status}`;
-      }
-
-      throw new Error(lastError);
-    }
-
     async function prosesDenganAI() {
       const apiKey = getActiveGeminiKey();
       if (!apiKey) {
-        showToast('Masukkan Gemini API Key terlebih dahulu!');
+        showToast('Masukkan API Key AI Studio (AIzaSy...) terlebih dahulu!');
         return;
       }
 
@@ -503,39 +482,41 @@ Instruksi wajib:
 Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
 
         const parts = [{ text: promptText }];
-        if (foto1Base64) {
-          parts.push({ inlineData: { mimeType: foto1Base64.mimeType, data: foto1Base64.base64 } });
-        }
-        if (foto2Base64) {
-          parts.push({ inlineData: { mimeType: foto2Base64.mimeType, data: foto2Base64.base64 } });
-        }
+        if (foto1Base64) parts.push({ inlineData: { mimeType: foto1Base64.mimeType, data: foto1Base64.base64 } });
+        if (foto2Base64) parts.push({ inlineData: { mimeType: foto2Base64.mimeType, data: foto2Base64.base64 } });
 
-        const payloadBody = {
-          contents: [{ role: 'user', parts }],
-          generationConfig: {
-            temperature: 0.1,
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: 'ARRAY',
-              items: {
-                type: 'OBJECT',
-                properties: {
-                  paperNo: { type: 'INTEGER' },
-                  paperName: { type: 'STRING' },
-                  paperClass: { type: 'STRING' },
-                  dbRowIndex: { type: 'INTEGER' },
-                  namaDB: { type: 'STRING' },
-                  isNew: { type: 'BOOLEAN' },
-                  adaTTD: { type: 'BOOLEAN' },
-                  catatanKolom: { type: 'STRING' }
-                },
-                required: ['paperNo', 'paperName', 'paperClass', 'dbRowIndex', 'namaDB', 'isNew', 'adaTTD', 'catatanKolom']
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts }],
+            generationConfig: {
+              temperature: 0.1,
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'ARRAY',
+                items: {
+                  type: 'OBJECT',
+                  properties: {
+                    paperNo: { type: 'INTEGER' },
+                    paperName: { type: 'STRING' },
+                    paperClass: { type: 'STRING' },
+                    dbRowIndex: { type: 'INTEGER' },
+                    namaDB: { type: 'STRING' },
+                    isNew: { type: 'BOOLEAN' },
+                    adaTTD: { type: 'BOOLEAN' },
+                    catatanKolom: { type: 'STRING' }
+                  },
+                  required: ['paperNo', 'paperName', 'paperClass', 'dbRowIndex', 'namaDB', 'isNew', 'adaTTD', 'catatanKolom']
+                }
               }
             }
-          }
-        };
+          })
+        });
 
-        const data = await callGeminiEndpoint(apiKey, payloadBody);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error?.message || 'Gagal menghubungi server AI.');
 
         let rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
         rawJsonText = rawJsonText.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -580,11 +561,10 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
     }
 
     // ==========================================
-    // 5. KOREKSI KILAT & KONFIRMASI AKHIR
+    // KOREKSI KILAT & KIRIM
     // ==========================================
     function renderHasilKoreksi() {
       let cH = 0, cKosong = 0, cA = 0, cS = 0, cI = 0;
-
       hasilAI.forEach(r => {
         if (r.status === 'H') cH++;
         else if (r.status === 'A') cA++;
@@ -611,10 +591,7 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
         labelBawah.innerHTML = `<span class="text-emerald-700">✅ Siap kirim: H:${cH} • A:${cA} • S:${cS} • I:${cI}</span>`;
       }
 
-      const tanpaTTDList = hasilAI
-        .map((row, idx) => ({ row, idx }))
-        .filter(item => !item.row.hasTTD || item.row.status !== 'H');
-
+      const tanpaTTDList = hasilAI.map((row, idx) => ({ row, idx })).filter(item => !item.row.hasTTD || item.row.status !== 'H');
       const boxTanpaTTD = document.getElementById('listTanpaTTD');
       if (tanpaTTDList.length === 0) {
         boxTanpaTTD.innerHTML = `<p class="text-xs text-emerald-700 font-semibold py-3 text-center">Semua peserta bertanda tangan (100% Hadir)!</p>`;
@@ -622,26 +599,15 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
         boxTanpaTTD.innerHTML = tanpaTTDList.map(({ row, idx }) => renderBarisItem(row, idx, true)).join('');
       }
 
-      const boxSemua = document.getElementById('listSemuaHasil');
-      boxSemua.innerHTML = hasilAI.map((row, idx) => renderBarisItem(row, idx, false)).join('');
+      document.getElementById('listSemuaHasil').innerHTML = hasilAI.map((row, idx) => renderBarisItem(row, idx, false)).join('');
     }
 
     function renderBarisItem(row, idx, highlightKosong) {
       const st = row.status;
       const isUnset = st === '';
-
-      const btnClass = (kode, activeColor) =>
-        st === kode
-          ? `${activeColor} text-white font-bold shadow-xs`
-          : `bg-slate-100 text-slate-600 hover:bg-slate-200`;
-
-      const dbInfo = row.dbRowIndex
-        ? `<span class="text-emerald-700">→ DB: ${row.dbName}</span>`
-        : `<span class="text-amber-700 font-bold">→ Anggota Baru (+Row DB)</span>`;
-
-      const aiBadge = row.hasTTD
-        ? `<span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-semibold">${row.aiNote}</span>`
-        : `<span class="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-bold">${row.aiNote}</span>`;
+      const btnClass = (kode, activeColor) => st === kode ? `${activeColor} text-white font-bold shadow-xs` : `bg-slate-100 text-slate-600 hover:bg-slate-200`;
+      const dbInfo = row.dbRowIndex ? `<span class="text-emerald-700">→ DB: ${row.dbName}</span>` : `<span class="text-amber-700 font-bold">→ Anggota Baru (+Row DB)</span>`;
+      const aiBadge = row.hasTTD ? `<span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-semibold">${row.aiNote}</span>` : `<span class="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-bold">${row.aiNote}</span>`;
 
       return `
         <div class="py-2.5 flex items-center justify-between gap-2 ${highlightKosong && isUnset ? 'bg-amber-50/60 -mx-2 px-2 rounded-lg' : ''}">
@@ -657,7 +623,6 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
               <span class="truncate">${dbInfo}</span>
             </div>
           </div>
-
           <div class="flex gap-1 shrink-0">
             <button onclick="ubahStatus(${idx}, 'H')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('H', 'bg-emerald-600')}">H</button>
             <button onclick="ubahStatus(${idx}, 'A')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('A', 'bg-red-600')}">A</button>
@@ -675,19 +640,11 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
 
     function setSemuaKosongKeAlpha() {
       let diubah = 0;
-      hasilAI.forEach(r => {
-        if (r.status === '') {
-          r.status = 'A';
-          diubah++;
-        }
-      });
+      hasilAI.forEach(r => { if (r.status === '') { r.status = 'A'; diubah++; } });
       renderHasilKoreksi();
       if (diubah > 0) showToast(`${diubah} baris kosong diisi Alpha (A).`);
     }
 
-    // ==========================================
-    // 6. KIRIM KE GOOGLE SPREADSHEET
-    // ==========================================
     async function kirimKeSpreadsheet() {
       const bulan = document.getElementById('selectBulan').value;
       const minggu = Number(document.getElementById('selectMinggu').value);
@@ -697,28 +654,12 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
         return;
       }
 
-      const absensiExisting = hasilAI
-        .filter(r => !r.isNew && r.dbRowIndex !== null)
-        .map(r => ({
-          rowIndex: r.dbRowIndex,
-          nama: r.dbName,
-          status: r.status
-        }));
-
-      const pesertaBaru = hasilAI
-        .filter(r => r.isNew && r.addToDb && r.paperName.trim() !== '')
-        .map(r => ({
-          nama: r.paperName.trim(),
-          kelas: r.paperClass || 'X-A',
-          status: r.status
-        }));
-
       const payload = {
         token: API_TOKEN,
-        bulan: bulan,
-        minggu: minggu,
-        absensi: absensiExisting,
-        pesertaBaru: pesertaBaru
+        bulan,
+        minggu,
+        absensi: hasilAI.filter(r => !r.isNew && r.dbRowIndex !== null).map(r => ({ rowIndex: r.dbRowIndex, nama: r.dbName, status: r.status })),
+        pesertaBaru: hasilAI.filter(r => r.isNew && r.addToDb && r.paperName.trim() !== '').map(r => ({ nama: r.paperName.trim(), kelas: r.paperClass || 'X-A', status: r.status }))
       };
 
       const btn = document.getElementById('btnKirim');
@@ -731,13 +672,12 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload)
         });
-
         const result = await response.json();
         if (result.status === 'success') {
           showToast(result.message, 5000);
           if (result.added > 0) await muatDataAwal(true);
         } else {
-          throw new Error(result.message || 'Gagal menyimpan data.');
+          throw new Error(result.message || 'Gagal menyimpan.');
         }
       } catch (err) {
         showToast('Gagal kirim: ' + err.message, 5000);
