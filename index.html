@@ -198,8 +198,8 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbxHFjrh4q4VSUwA0s03OyRFfel8s78e0hP4YbzY-AQSCLiU_tcMepdrxhysEj6R4-ZWnw/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
-    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v8';
-    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_aq_key_v8';
+    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v9';
+    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_aq_key_v9';
 
     let rawJadwal = [];
     let rawPeserta = [];
@@ -245,16 +245,19 @@
     }
 
     async function callVertexEndpoint(apiKey, payloadBody) {
+      // Menggunakan Header x-goog-api-key dan endpoint alternatif standar AI Studio v1beta
       const urls = [
-        `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-        `https://aiplatform.googleapis.com/v1beta1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`
       ];
 
-      let lastError = 'Gagal menghubungi Vertex AI.';
+      let lastError = 'Gagal menghubungi server AI.';
       for (const url of urls) {
         const response = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
           body: JSON.stringify(payloadBody)
         });
         const data = await response.json();
@@ -421,7 +424,7 @@
           foto2Base64 = compressed;
           document.getElementById('imgPrev2').src = compressed.dataUrl;
           document.getElementById('wrapPrev2').classList.remove('hidden');
-          document.getElementById('labelFoto2').textContent = '✅ Foto 2 Terpasang';
+          document.getElementById('labelFoto2').textContent = '+ Foto 2 (Opsional)';
         }
         updateTombolProses();
       } catch (err) {
@@ -453,9 +456,6 @@
       document.getElementById('btnProsesAI').disabled = !(hasKey && hasFoto && hasDB);
     }
 
-    // ==========================================
-    // VERTEX AI VISION (KHUSUS KEY AQ.)
-    // ==========================================
     async function prosesDenganAI() {
       const apiKey = getActiveGeminiKey();
       if (!apiKey) {
