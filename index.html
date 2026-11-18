@@ -30,21 +30,21 @@
     <section id="boxApiKey" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
       <div id="apiKeyInputMode" class="space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700">🔑 Tempel API Key AI Studio (AIzaSy...)</span>
-          <a href="https://aistudio.google.com/apikey" target="_blank" class="text-[11px] text-emerald-700 font-semibold underline">Ambil Key AI Studio →</a>
+          <span class="text-xs font-bold text-slate-700">🔑 Tempel API Key (AQ....)</span>
+          <a href="https://aistudio.google.com/apikey" target="_blank" class="text-[11px] text-emerald-700 font-semibold underline">Google AI Studio →</a>
         </div>
         <div class="flex gap-2">
-          <input type="password" id="inputGeminiKey" placeholder="Tempel AIzaSy... di sini"
+          <input type="password" id="inputGeminiKey" placeholder="Tempel AQ. di sini"
             class="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-600" />
           <button id="btnSimpanKey" onclick="simpanDanTesKey()" class="bg-slate-900 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shrink-0">
             Simpan & Tes
           </button>
         </div>
-        <p class="text-[10px] text-slate-500">Key tersimpan aman di browser HP.</p>
+        <p class="text-[10px] text-slate-500">Key AQ. tersimpan aman di browser HP.</p>
       </div>
 
       <div id="apiKeyReadyMode" class="hidden flex items-center justify-between text-xs">
-        <span class="font-semibold text-emerald-700">✅ AI Vision Aktif (Gemini 2.5 Flash)</span>
+        <span class="font-semibold text-emerald-700">✅ AI Vision Aktif (Vertex Express AQ.)</span>
         <button onclick="ubahGeminiKey()" class="text-slate-500 underline">Ganti API Key</button>
       </div>
     </section>
@@ -198,8 +198,8 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbxHFjrh4q4VSUwA0s03OyRFfel8s78e0hP4YbzY-AQSCLiU_tcMepdrxhysEj6R4-ZWnw/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
-    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v7';
-    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_clean_key_v7';
+    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v8';
+    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_aq_key_v8';
 
     let rawJadwal = [];
     let rawPeserta = [];
@@ -229,7 +229,7 @@
 
     function getActiveGeminiKey() {
       const saved = localStorage.getItem(GEMINI_KEY_STORAGE);
-      return (saved && saved.trim().startsWith('AIza')) ? saved.trim() : '';
+      return (saved && saved.trim().startsWith('AQ.')) ? saved.trim() : '';
     }
 
     function cekStatusApiKey() {
@@ -244,10 +244,30 @@
       updateTombolProses();
     }
 
+    async function callVertexEndpoint(apiKey, payloadBody) {
+      const urls = [
+        `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+        `https://aiplatform.googleapis.com/v1beta1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`
+      ];
+
+      let lastError = 'Gagal menghubungi Vertex AI.';
+      for (const url of urls) {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloadBody)
+        });
+        const data = await response.json();
+        if (response.ok) return data;
+        lastError = data.error?.message || `HTTP ${response.status}`;
+      }
+      throw new Error(lastError);
+    }
+
     async function simpanDanTesKey() {
       const val = document.getElementById('inputGeminiKey').value.trim();
-      if (!val.startsWith('AIza')) {
-        showToast('Key harus dari AI Studio (diawali AIzaSy...)');
+      if (!val.startsWith('AQ.')) {
+        showToast('Key harus diawali AQ.');
         return;
       }
 
@@ -257,21 +277,16 @@
       document.getElementById('boxErrorAI').classList.add('hidden');
 
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(val)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'OK' }] }] })
+        await callVertexEndpoint(val, {
+          contents: [{ role: 'user', parts: [{ text: 'OK' }] }]
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error?.message || 'Key ditolak Google.');
-
         localStorage.setItem(GEMINI_KEY_STORAGE, val);
         cekStatusApiKey();
-        showToast('✅ API Key valid & tersimpan!');
+        showToast('✅ API Key AQ. valid & tersimpan!');
       } catch (err) {
         document.getElementById('textErrorAI').textContent = err.message;
         document.getElementById('boxErrorAI').classList.remove('hidden');
-        showToast('Gagal memvalidasi key.', 4000);
+        showToast('Gagal memvalidasi key AQ.', 4000);
       } finally {
         btn.disabled = false;
         btn.textContent = 'Simpan & Tes';
@@ -439,12 +454,12 @@
     }
 
     // ==========================================
-    // GEMINI AI STUDIO VISION
+    // VERTEX AI VISION (KHUSUS KEY AQ.)
     // ==========================================
     async function prosesDenganAI() {
       const apiKey = getActiveGeminiKey();
       if (!apiKey) {
-        showToast('Masukkan API Key AI Studio (AIzaSy...) terlebih dahulu!');
+        showToast('Masukkan API Key AQ. terlebih dahulu!');
         return;
       }
 
@@ -485,38 +500,32 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
         if (foto1Base64) parts.push({ inlineData: { mimeType: foto1Base64.mimeType, data: foto1Base64.base64 } });
         if (foto2Base64) parts.push({ inlineData: { mimeType: foto2Base64.mimeType, data: foto2Base64.base64 } });
 
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts }],
-            generationConfig: {
-              temperature: 0.1,
-              responseMimeType: 'application/json',
-              responseSchema: {
-                type: 'ARRAY',
-                items: {
-                  type: 'OBJECT',
-                  properties: {
-                    paperNo: { type: 'INTEGER' },
-                    paperName: { type: 'STRING' },
-                    paperClass: { type: 'STRING' },
-                    dbRowIndex: { type: 'INTEGER' },
-                    namaDB: { type: 'STRING' },
-                    isNew: { type: 'BOOLEAN' },
-                    adaTTD: { type: 'BOOLEAN' },
-                    catatanKolom: { type: 'STRING' }
-                  },
-                  required: ['paperNo', 'paperName', 'paperClass', 'dbRowIndex', 'namaDB', 'isNew', 'adaTTD', 'catatanKolom']
-                }
+        const payloadBody = {
+          contents: [{ role: 'user', parts }],
+          generationConfig: {
+            temperature: 0.1,
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'ARRAY',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  paperNo: { type: 'INTEGER' },
+                  paperName: { type: 'STRING' },
+                  paperClass: { type: 'STRING' },
+                  dbRowIndex: { type: 'INTEGER' },
+                  namaDB: { type: 'STRING' },
+                  isNew: { type: 'BOOLEAN' },
+                  adaTTD: { type: 'BOOLEAN' },
+                  catatanKolom: { type: 'STRING' }
+                },
+                required: ['paperNo', 'paperName', 'paperClass', 'dbRowIndex', 'namaDB', 'isNew', 'adaTTD', 'catatanKolom']
               }
             }
-          })
-        });
+          }
+        };
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error?.message || 'Gagal menghubungi server AI.');
+        const data = await callVertexEndpoint(apiKey, payloadBody);
 
         let rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
         rawJsonText = rawJsonText.replace(/```json/gi, '').replace(/```/g, '').trim();
