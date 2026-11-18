@@ -44,7 +44,7 @@
       </div>
 
       <div id="apiKeyReadyMode" class="hidden flex items-center justify-between text-xs">
-        <span class="font-semibold text-emerald-700">✅ AI Vision Aktif (Vertex Express AQ.)</span>
+        <span class="font-semibold text-emerald-700">✅ AI Vision Aktif (Gemini 3.8 Flash)</span>
         <button onclick="ubahGeminiKey()" class="text-slate-500 underline">Ganti API Key</button>
       </div>
     </section>
@@ -198,8 +198,8 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbxHFjrh4q4VSUwA0s03OyRFfel8s78e0hP4YbzY-AQSCLiU_tcMepdrxhysEj6R4-ZWnw/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
-    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v9';
-    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_aq_key_v9';
+    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v10';
+    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_aq_key_v10';
 
     let rawJadwal = [];
     let rawPeserta = [];
@@ -245,26 +245,20 @@
     }
 
     async function callVertexEndpoint(apiKey, payloadBody) {
-      // Menggunakan Header x-goog-api-key dan endpoint alternatif standar AI Studio v1beta
-      const urls = [
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`
-      ];
+      // Diperbarui ke gemini-3.8-flash sesuai instruksi terbaru Google AI
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent`;
 
-      let lastError = 'Gagal menghubungi server AI.';
-      for (const url of urls) {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': apiKey
-          },
-          body: JSON.stringify(payloadBody)
-        });
-        const data = await response.json();
-        if (response.ok) return data;
-        lastError = data.error?.message || `HTTP ${response.status}`;
-      }
-      throw new Error(lastError);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
+        body: JSON.stringify(payloadBody)
+      });
+      const data = await response.json();
+      if (response.ok) return data;
+      throw new Error(data.error?.message || `HTTP ${response.status}`);
     }
 
     async function simpanDanTesKey() {
@@ -424,7 +418,7 @@
           foto2Base64 = compressed;
           document.getElementById('imgPrev2').src = compressed.dataUrl;
           document.getElementById('wrapPrev2').classList.remove('hidden');
-          document.getElementById('labelFoto2').textContent = '+ Foto 2 (Opsional)';
+          document.getElementById('labelFoto2').textContent = '✅ Foto 2 Terpasang';
         }
         updateTombolProses();
       } catch (err) {
