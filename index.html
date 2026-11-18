@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Scanner Absensi Pramuka 58</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Tesseract.js untuk membaca daftar nama & kelas dari foto kertas -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
@@ -45,12 +44,13 @@
       <p class="text-xs text-slate-500 mt-2" id="infoPesertaAktif">Memuat data DB...</p>
     </section>
 
-    <!-- Step 2: Foto Halaman Nama Kertas & Cek Orang Baru -->
+    <!-- Step 2: FOTO 1 - Daftar Nama Kertas -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
       <div class="flex items-center justify-between gap-2">
         <div>
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Daftar Nama di Kertas (Cek Orang Baru)</h2>
-          <p class="text-[11px] text-slate-500 mt-0.5" id="statusRosterKertas">Belum ada foto nama kertas di-scan</p>
+          <span class="inline-block text-[10px] font-bold bg-sky-100 text-sky-800 px-2 py-0.5 rounded uppercase mb-1">Foto 1 • Halaman Nama</span>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">2. Scan Nama & Kelas di Kertas</h2>
+          <p class="text-[11px] text-slate-500 mt-0.5" id="statusRosterKertas">Belum ada foto halaman nama di-scan</p>
         </div>
         <button onclick="tambahBarisKertasManual()" class="shrink-0 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300">
           + Baris Manual
@@ -59,11 +59,20 @@
 
       <label class="flex flex-col items-center justify-center w-full py-4 border-2 border-dashed border-sky-400 rounded-xl bg-sky-50/50 hover:bg-sky-50 cursor-pointer transition">
         <div class="text-center px-4">
-          <p class="text-sm font-semibold text-sky-700">Foto Halaman Nama & Kelas (Buku Folio)</p>
-          <p class="text-xs text-slate-500 mt-0.5">Otomatis mencocokkan urutan kertas ke DB & mendeteksi orang baru</p>
+          <p class="text-sm font-semibold text-sky-700">Ambil / Pilih Foto 1 (Halaman Nama)</p>
+          <p class="text-xs text-slate-500 mt-0.5">Mencocokkan urutan nama kertas ke DB & cek anggota baru</p>
         </div>
         <input type="file" id="inputFotoNama" accept="image/*" capture="environment" class="hidden" />
       </label>
+
+      <!-- Preview Thumbnail Foto 1 -->
+      <div id="previewFotoNamaBox" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-2 flex items-center gap-3">
+        <img id="imgPreviewNama" alt="Preview Foto Nama" class="w-16 h-20 object-cover rounded border border-slate-300 shrink-0" />
+        <div class="text-xs text-slate-600">
+          <p class="font-bold text-slate-800">Foto 1 (Halaman Nama) Terpasang</p>
+          <p class="text-[11px] mt-0.5">Pastikan urutan nama di bawah sudah sama dengan urutan baris di kertas.</p>
+        </div>
+      </div>
 
       <!-- Progress Bar OCR -->
       <div id="ocrProgressBox" class="hidden bg-sky-50 border border-sky-200 rounded-lg p-3 text-xs text-sky-800 space-y-1.5">
@@ -78,11 +87,11 @@
 
       <!-- Alert Jika Ada Orang Baru -->
       <div id="alertOrangBaru" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-3 text-xs text-amber-900">
-        <p class="font-bold">⚠️ Terdeteksi Peserta Baru (Belum Ada di DB):</p>
+        <p class="font-bold">⚠️ Terdeteksi Anggota Baru (Belum Ada di DB):</p>
         <p class="mt-0.5 text-amber-800" id="detailOrangBaru"></p>
       </div>
 
-      <!-- Tabel Pemetaan Urutan Kertas -> DB -->
+      <!-- Daftar Pemetaan Urutan Kertas -> DB -->
       <div id="wrapperTabelKertas" class="hidden space-y-2">
         <div class="flex items-center justify-between text-xs">
           <span class="font-semibold text-slate-600">Urutan Baris Kertas (<span id="totalBarisKertas">0</span> baris)</span>
@@ -92,17 +101,20 @@
       </div>
     </section>
 
-    <!-- Step 3: Ambil / Upload Foto Kolom TTD -->
+    <!-- Step 3: FOTO 2 - Kolom TTD (Urut dari Judul sampai TTD Terbawah) -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">3. Foto Kolom TTD Buku Folio</h2>
-        <span class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium">Sesuai Urutan Kertas</span>
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <span class="inline-block text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded uppercase mb-1">Foto 2 • Kolom TTD</span>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">3. Scan Kolom TTD (Judul s/d Terbawah)</h2>
+        </div>
+        <span class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium shrink-0">Urut Judul → Bawah</span>
       </div>
 
-      <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-400 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 cursor-pointer transition">
+      <label class="flex flex-col items-center justify-center w-full py-4 border-2 border-dashed border-emerald-400 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 cursor-pointer transition">
         <div class="text-center px-4">
-          <p class="text-sm font-semibold text-emerald-700">Ambil Foto / Pilih Gambar Kolom TTD</p>
-          <p class="text-xs text-slate-500 mt-0.5">Mendukung kamera langsung atau galeri HP</p>
+          <p class="text-sm font-semibold text-emerald-700">Ambil / Pilih Foto 2 (Kolom TTD)</p>
+          <p class="text-xs text-slate-500 mt-0.5">Sejajarkan kotak biru di JUDUL tabel dan kotak hijau/merah sampai TTD terbawah</p>
         </div>
         <input type="file" id="inputFotoTTD" accept="image/*" capture="environment" class="hidden" />
       </label>
@@ -115,51 +127,55 @@
 
         <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2.5 text-xs">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-700">Kalibrasi Posisi Kolom TTD</span>
+            <span class="font-bold text-slate-700">Kalibrasi Grid (Judul → TTD Terbawah)</span>
             <button onclick="resetKalibrasi()" class="text-emerald-700 font-semibold underline">Reset Posisi</button>
           </div>
 
           <div class="grid grid-cols-2 gap-x-4 gap-y-2">
             <div>
-              <div class="flex justify-between text-slate-600"><span>Batas Atas</span><span id="valTop">10%</span></div>
-              <input type="range" id="rangeTop" min="0" max="80" value="10" class="w-full" oninput="prosesDeteksiTinta()" />
+              <div class="flex justify-between text-slate-600"><span>Atas Judul Tabel</span><span id="valTop">8%</span></div>
+              <input type="range" id="rangeTop" min="0" max="70" value="8" class="w-full" oninput="prosesDeteksiTinta()" />
             </div>
             <div>
-              <div class="flex justify-between text-slate-600"><span>Batas Bawah</span><span id="valBottom">92%</span></div>
-              <input type="range" id="rangeBottom" min="20" max="100" value="92" class="w-full" oninput="prosesDeteksiTinta()" />
+              <div class="flex justify-between text-slate-600"><span>Tinggi Baris Judul</span><span id="valHeaderH">5%</span></div>
+              <input type="range" id="rangeHeaderH" min="0" max="20" step="0.5" value="5" class="w-full" oninput="prosesDeteksiTinta()" />
             </div>
             <div>
-              <div class="flex justify-between text-slate-600"><span>Kiri Kolom TTD</span><span id="valLeft">65%</span></div>
-              <input type="range" id="rangeLeft" min="0" max="95" value="65" class="w-full" oninput="prosesDeteksiTinta()" />
+              <div class="flex justify-between text-slate-600"><span>Batas TTD Terbawah</span><span id="valBottom">92%</span></div>
+              <input type="range" id="rangeBottom" min="25" max="100" value="92" class="w-full" oninput="prosesDeteksiTinta()" />
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-600"><span>Kiri Kolom TTD</span><span id="valLeft">55%</span></div>
+              <input type="range" id="rangeLeft" min="0" max="90" value="55" class="w-full" oninput="prosesDeteksiTinta()" />
             </div>
             <div>
               <div class="flex justify-between text-slate-600"><span>Kanan Kolom TTD</span><span id="valRight">95%</span></div>
-              <input type="range" id="rangeRight" min="5" max="100" value="95" class="w-full" oninput="prosesDeteksiTinta()" />
+              <input type="range" id="rangeRight" min="10" max="100" value="95" class="w-full" oninput="prosesDeteksiTinta()" />
             </div>
-          </div>
-
-          <div class="pt-1 border-t border-slate-200 grid grid-cols-2 gap-x-4 gap-y-2">
             <div>
               <div class="flex justify-between text-slate-600"><span>Kepekatan Tinta</span><span id="valDarkness">135</span></div>
               <input type="range" id="rangeDarkness" min="60" max="210" value="135" class="w-full" oninput="prosesDeteksiTinta()" />
             </div>
-            <div>
-              <div class="flex justify-between text-slate-600"><span>Min. Coretan (%)</span><span id="valMinInk">2.5%</span></div>
-              <input type="range" id="rangeMinInk" min="0.5" max="15" step="0.5" value="2.5" class="w-full" oninput="prosesDeteksiTinta()" />
-            </div>
+          </div>
+
+          <div class="pt-1 border-t border-slate-200">
+            <div class="flex justify-between text-slate-600"><span>Batas Min. Coretan TTD (%)</span><span id="valMinInk">2.5%</span></div>
+            <input type="range" id="rangeMinInk" min="0.5" max="15" step="0.5" value="2.5" class="w-full" oninput="prosesDeteksiTinta()" />
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Step 4: Daftar Hasil Scan & Koreksi Manual -->
+    <!-- Step 4: Hasil Scan Sementara (Hadir vs Tidak Hadir) -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">4. Hasil Absen & Koreksi Cepat</h2>
-        <div class="flex gap-1.5 text-[11px] font-bold">
-          <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded" id="countH">H: 0</span>
-          <span class="bg-red-100 text-red-800 px-2 py-0.5 rounded" id="countA">A: 0</span>
-          <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded" id="countIS">I/S: 0</span>
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">4. Hasil Deteksi Coretan TTD</h2>
+          <p class="text-[11px] text-slate-500">Tanpa coretan = Tidak Hadir (atur A/S/I di Konfirmasi Akhir)</p>
+        </div>
+        <div class="flex gap-1.5 text-[11px] font-bold shrink-0">
+          <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded" id="countH">Hadir: 0</span>
+          <span class="bg-red-100 text-red-800 px-2 py-0.5 rounded" id="countTH">Tidak Hadir: 0</span>
         </div>
       </div>
 
@@ -175,12 +191,75 @@
     <div class="max-w-2xl mx-auto flex items-center justify-between gap-3">
       <div class="text-xs text-slate-600 leading-tight">
         Target: <strong id="labelTargetKirim" class="text-slate-900">-</strong>
-        <div class="text-[11px] text-amber-700 font-semibold" id="labelInfoTambahRow"></div>
+        <div class="text-[11px] text-slate-500" id="labelRingkasanBawah">Hadir: 0 • Tidak Hadir: 0</div>
       </div>
-      <button id="btnKirim" onclick="kirimKeSpreadsheet()" disabled
+      <button id="btnBukaKonfirmasi" onclick="bukaModalKonfirmasi()" disabled
         class="bg-emerald-600 disabled:bg-slate-300 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow transition shrink-0">
-        Simpan ke Spreadsheet
+        Konfirmasi Akhir →
       </button>
+    </div>
+  </div>
+
+  <!-- MODAL KONFIRMASI AKHIR (ALPHA / SAKIT / IZIN) -->
+  <div id="modalKonfirmasi" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full max-w-xl rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="px-4 py-3.5 bg-slate-900 text-white flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-sm">Konfirmasi Akhir Absensi</h3>
+          <p class="text-[11px] text-slate-300" id="modalTargetLabel">Target: -</p>
+        </div>
+        <button onclick="tutupModalKonfirmasi()" class="text-slate-300 hover:text-white text-lg font-bold px-2">✕</button>
+      </div>
+
+      <!-- Ringkasan Hitungan Live -->
+      <div class="p-3 bg-slate-50 border-b border-slate-200 grid grid-cols-4 gap-2 text-center">
+        <div class="bg-emerald-100/80 border border-emerald-200 rounded-lg py-2">
+          <div class="text-lg font-extrabold text-emerald-800" id="konfCountH">0</div>
+          <div class="text-[10px] font-bold uppercase text-emerald-700">Hadir (H)</div>
+        </div>
+        <div class="bg-red-100/80 border border-red-200 rounded-lg py-2">
+          <div class="text-lg font-extrabold text-red-800" id="konfCountA">0</div>
+          <div class="text-[10px] font-bold uppercase text-red-700">Alpha (A)</div>
+        </div>
+        <div class="bg-cyan-100/80 border border-cyan-200 rounded-lg py-2">
+          <div class="text-lg font-extrabold text-cyan-800" id="konfCountS">0</div>
+          <div class="text-[10px] font-bold uppercase text-cyan-700">Sakit (S)</div>
+        </div>
+        <div class="bg-amber-100/80 border border-amber-200 rounded-lg py-2">
+          <div class="text-lg font-extrabold text-amber-800" id="konfCountI">0</div>
+          <div class="text-[10px] font-bold uppercase text-amber-700">Izin (I)</div>
+        </div>
+      </div>
+
+      <!-- Daftar Konfirmasi Peserta Tidak Hadir -->
+      <div class="p-4 overflow-y-auto flex-1 space-y-3">
+        <div id="infoTambahRowModal" class="hidden bg-amber-50 border border-amber-300 text-amber-900 text-xs px-3 py-2 rounded-lg font-semibold"></div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+            Daftar Tidak Hadir (Tanpa Coretan TTD)
+          </h4>
+          <p class="text-[11px] text-slate-500 mb-2.5">
+            Tentukan keterangan untuk setiap anggota yang tidak bertanda tangan:
+          </p>
+
+          <div id="listKonfirmasiTidakHadir" class="divide-y divide-slate-100 border border-slate-200 rounded-xl px-3 bg-white">
+            <!-- Diisi dinamis oleh JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 bg-white border-t border-slate-200 flex items-center justify-between gap-2">
+        <button onclick="tutupModalKonfirmasi()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">
+          Kembali Edit
+        </button>
+        <button id="btnKirimFinal" onclick="kirimKeSpreadsheet()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold text-sm py-2.5 px-4 rounded-xl shadow transition">
+          Simpan ke Spreadsheet
+        </button>
+      </div>
     </div>
   </div>
 
@@ -190,27 +269,12 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbxHFjrh4q4VSUwA0s03OyRFfel8s78e0hP4YbzY-AQSCLiU_tcMepdrxhysEj6R4-ZWnw/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
-    const CACHE_DB_KEY = 'pramuka58_db_cache_v3';
-    const CACHE_KERTAS_KEY = 'pramuka58_roster_kertas_v1';
+    const CACHE_DB_KEY = 'pramuka58_db_cache_v4';
+    const CACHE_KERTAS_KEY = 'pramuka58_roster_kertas_v2';
 
     let rawJadwal = [];
     let rawPeserta = [];
     let dbAktif = [];
-
-    /**
-     * Struktur paperRows (urutan baris 1..N persis seperti di buku folio):
-     * {
-     *   paperNo: 1,
-     *   paperName: "El Victorious Dharma S.M",
-     *   paperClass: "X-F",
-     *   dbRowIndex: 5,         // null jika orang baru / tidak ada di DB
-     *   dbName: "El Victorious Dharma Satrio Manullang",
-     *   matchType: "exact" | "fuzzy" | "new",
-     *   addToDb: false,        // true jika user setuju tambah row baru ke DB
-     *   status: "A",           // 'H' | 'A' | 'I' | 'S'
-     *   inkScore: null
-     * }
-     */
     let paperRows = [];
     let loadedImageTTD = null;
 
@@ -251,7 +315,7 @@
       rawPeserta = data.peserta || [];
       isiDropdownBulan();
       document.getElementById('statusKoneksi').textContent = `Terhubung: ${data.sheetName} (${sumberLabel})`;
-      document.getElementById('btnKirim').disabled = false;
+      document.getElementById('btnBukaKonfirmasi').disabled = false;
     }
 
     async function muatDataAwal(forceRefresh = false) {
@@ -324,9 +388,8 @@
       dbAktif = rawPeserta.filter(p => !p.purnaCols.includes(colIndex));
 
       document.getElementById('infoPesertaAktif').textContent =
-        `DB aktif: ${dbAktif.length} orang (Peserta ~PURNA~ dilewati).`;
+        `DB aktif: ${dbAktif.length} orang (Peserta ~PURNA~ otomatis dilewati).`;
 
-      // Muat susunan kertas dari cache jika tersedia, atau pakai default DB
       if (paperRows.length === 0) {
         const cachedKertas = localStorage.getItem(CACHE_KERTAS_KEY);
         if (cachedKertas) {
@@ -334,7 +397,6 @@
             const parsed = JSON.parse(cachedKertas);
             if (Array.isArray(parsed) && parsed.length > 0) {
               paperRows = parsed.map((item, i) => {
-                // Re-evaluasi match ke DB terbaru
                 const match = cariKecocokanDB(item.paperName, item.paperClass, item.dbRowIndex);
                 return {
                   paperNo: i + 1,
@@ -377,7 +439,7 @@
       }));
       localStorage.removeItem(CACHE_KERTAS_KEY);
       document.getElementById('statusRosterKertas').textContent =
-        'Menggunakan urutan default DB (Foto halaman nama kertas untuk cek orang baru).';
+        'Menggunakan urutan default DB (Upload Foto 1 untuk scan nama kertas & cek orang baru).';
       document.getElementById('wrapperTabelKertas').classList.remove('hidden');
       renderSemuaUI();
       if (notify) showToast('Urutan dikembalikan ke default DB.');
@@ -418,14 +480,11 @@
       const pTokens = pNorm.split(' ');
       const dTokens = dNorm.split(' ');
 
-      // Cek kecocokan per kata / inisial (misal "El Victorious Dharma S.M" vs "El Victorious Dharma Satrio Manullang")
       let matchedTokens = 0;
       pTokens.forEach(pt => {
         if (pt.length === 1) {
-          // Cocokkan inisial
           if (dTokens.some(dt => dt.startsWith(pt))) matchedTokens += 0.8;
         } else {
-          // Cocokkan kata penuh atau typo ringan OCR (1-2 huruf)
           const bestWordSim = Math.max(...dTokens.map(dt => {
             const maxLen = Math.max(pt.length, dt.length);
             return 1 - levenshtein(pt, dt) / maxLen;
@@ -435,8 +494,6 @@
       });
 
       let score = matchedTokens / Math.max(pTokens.length, dTokens.length * 0.85);
-
-      // Bonus kecil jika kelas juga sama (misal X-F == X-F)
       const pCls = normalisasiTeks(paperClass).replace(/\s/g, '');
       const dCls = normalisasiTeks(dbItem.kelas).replace(/\s/g, '');
       if (pCls && dCls && pCls === dCls) score += 0.08;
@@ -477,11 +534,16 @@
     }
 
     // ==========================================
-    // 3. OCR FOTO HALAMAN NAMA KERTAS (TESSERACT.JS)
+    // 3. FOTO 1: OCR HALAMAN NAMA KERTAS
     // ==========================================
     async function handleScanNamaKertas(e) {
       const file = e.target.files[0];
       if (!file) return;
+
+      // Tampilkan preview thumbnail Foto 1
+      const previewUrl = URL.createObjectURL(file);
+      document.getElementById('imgPreviewNama').src = previewUrl;
+      document.getElementById('previewFotoNamaBox').classList.remove('hidden');
 
       const progressBox = document.getElementById('ocrProgressBox');
       const statusText = document.getElementById('ocrStatusText');
@@ -489,19 +551,18 @@
       const progressBar = document.getElementById('ocrProgressBar');
 
       progressBox.classList.remove('hidden');
-      statusText.textContent = 'Menyiapkan gambar kertas...';
+      statusText.textContent = 'Menyiapkan gambar Foto 1...';
       pctText.textContent = '0%';
       progressBar.style.width = '0%';
 
       try {
-        // Pre-process kontras hitam-putih agar garis buku folio memudar & tulisan tangan tajam
         const processedDataUrl = await preprocessImageForOCR(file);
 
         const result = await Tesseract.recognize(processedDataUrl, 'eng', {
           logger: m => {
             if (m.status === 'recognizing text') {
               const pct = Math.round((m.progress || 0) * 100);
-              statusText.textContent = 'Membaca nama & kelas di kertas...';
+              statusText.textContent = 'Membaca nama & kelas di Foto 1...';
               pctText.textContent = pct + '%';
               progressBar.style.width = pct + '%';
             }
@@ -510,7 +571,7 @@
 
         const parsedRows = parseHasilOCRKertas(result.data.text);
         if (parsedRows.length === 0) {
-          throw new Error('Teks nama tidak terbaca jelas. Coba foto lebih dekat & terang, atau tambah baris manual.');
+          throw new Error('Teks nama tidak terbaca jelas. Coba foto lebih tegak/terang atau edit manual.');
         }
 
         paperRows = parsedRows.map((item, idx) => {
@@ -522,7 +583,7 @@
             dbRowIndex: match.dbRowIndex,
             dbName: match.dbName,
             matchType: match.matchType,
-            addToDb: match.matchType === 'new', // Otomatis centang "Tambah Row" jika orang baru!
+            addToDb: match.matchType === 'new',
             status: 'A',
             inkScore: null
           };
@@ -530,12 +591,12 @@
 
         simpanRosterKertasKeCache();
         document.getElementById('statusRosterKertas').textContent =
-          `Berhasil scan ${paperRows.length} baris dari foto kertas.`;
+          `Berhasil scan ${paperRows.length} baris dari Foto 1.`;
         document.getElementById('wrapperTabelKertas').classList.remove('hidden');
 
         renderSemuaUI();
         if (loadedImageTTD) prosesDeteksiTinta();
-        showToast(`Scan selesai! Terbaca ${paperRows.length} nama dari kertas.`);
+        showToast(`Foto 1 selesai! Terbaca ${paperRows.length} baris nama.`);
       } catch (err) {
         showToast('OCR Info: ' + err.message, 5000);
       } finally {
@@ -559,7 +620,6 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-            // Tingkatkan kontras grayscale agar tulisan pulpen gelap menonjol
             const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const d = imgData.data;
             for (let i = 0; i < d.length; i += 4) {
@@ -583,16 +643,12 @@
       const hasil = [];
 
       lines.forEach(line => {
-        // Lewati header tabel
         if (/^(nama|kelas|no|daftar|absen)/i.test(line)) return;
 
-        // Bersihkan simbol garis tabel OCR (|, [, ], _, —)
         let clean = line.replace(/[|\[\]_~—=]+/g, ' ').replace(/\s+/g, ' ').trim();
-        // Hapus nomor baris di awal (misal "1 ", "12. ", "20 ")
         clean = clean.replace(/^\d{1,2}[\.\)\-\s]+/, '').trim();
         if (clean.length < 4) return;
 
-        // Ekstrak kelas di ujung baris (misal X-A, XI-D, XII-G, X.F)
         let kelas = '';
         const kelasMatch = clean.match(/\b(X{1,2}I?[\s\-\.]?[A-Z0-9])\s*$/i);
         if (kelasMatch) {
@@ -603,7 +659,6 @@
           clean = clean.slice(0, kelasMatch.index).trim();
         }
 
-        // Pastikan nama minimal mengandung 3 huruf alfabet
         const hurufSaja = clean.replace(/[^a-zA-Z]/g, '');
         if (hurufSaja.length >= 3) {
           hasil.push({ nama: clean, kelas: kelas || 'X-A' });
@@ -613,7 +668,6 @@
       return hasil;
     }
 
-    // Manipulasi Baris Kertas Manual (Edit Nama, Ganti Mapping DB, Centang Tambah Row)
     function tambahBarisKertasManual() {
       const nextNo = paperRows.length + 1;
       paperRows.push({
@@ -624,7 +678,7 @@
         dbName: null,
         matchType: 'new',
         addToDb: true,
-        status: 'H',
+        status: 'A',
         inkScore: null
       });
       document.getElementById('wrapperTabelKertas').classList.remove('hidden');
@@ -684,27 +738,20 @@
 
     function updateAlertOrangBaru() {
       const orangBaruList = paperRows.filter(r => r.matchType === 'new');
-      const akanDitambah = orangBaruList.filter(r => r.addToDb && r.paperName.trim() !== '');
-
       const alertBox = document.getElementById('alertOrangBaru');
       const detailEl = document.getElementById('detailOrangBaru');
-      const footerLabel = document.getElementById('labelInfoTambahRow');
 
       if (orangBaruList.length > 0) {
         alertBox.classList.remove('hidden');
         const namaList = orangBaruList.map(r => `#${r.paperNo} ${r.paperName || '(Belum diisi)'}`).join(', ');
-        detailEl.textContent = `${namaList} tidak ditemukan di Spreadsheet. Centang "Tambah Row" pada barisnya jika ingin otomatis menambah baris baru di DB.`;
+        detailEl.textContent = `${namaList} belum terdaftar di Spreadsheet. Centang "Tambah Row DB" jika ingin otomatis dibuatkan baris baru.`;
       } else {
         alertBox.classList.add('hidden');
       }
-
-      footerLabel.textContent = akanDitambah.length > 0
-        ? `+ ${akanDitambah.length} baris baru akan ditambahkan ke DB`
-        : '';
     }
 
     // ==========================================
-    // 4. DETEKSI KEPADATAN TINTA TTD (SESUAI JUMLAH BARIS KERTAS)
+    // 4. FOTO 2: DETEKSI TTD (JUDUL -> TTD TERBAWAH)
     // ==========================================
     function handleUploadFotoTTD(e) {
       const file = e.target.files[0];
@@ -717,7 +764,7 @@
           loadedImageTTD = img;
           document.getElementById('areaKalibrasi').classList.remove('hidden');
           prosesDeteksiTinta();
-          showToast(`Foto TTD dimuat untuk ${paperRows.length} baris kertas!`);
+          showToast(`Foto 2 (TTD) dimuat! Sejajarkan kotak JUDUL sampai baris #${paperRows.length}.`);
         };
         img.src = event.target.result;
       };
@@ -725,9 +772,10 @@
     }
 
     function resetKalibrasi() {
-      document.getElementById('rangeTop').value = 10;
+      document.getElementById('rangeTop').value = 8;
+      document.getElementById('rangeHeaderH').value = 5;
       document.getElementById('rangeBottom').value = 92;
-      document.getElementById('rangeLeft').value = 65;
+      document.getElementById('rangeLeft').value = 55;
       document.getElementById('rangeRight').value = 95;
       document.getElementById('rangeDarkness').value = 135;
       document.getElementById('rangeMinInk').value = 2.5;
@@ -738,6 +786,7 @@
       if (!loadedImageTTD || paperRows.length === 0) return;
 
       const topPct = Number(document.getElementById('rangeTop').value);
+      const headerHPct = Number(document.getElementById('rangeHeaderH').value);
       const bottomPct = Number(document.getElementById('rangeBottom').value);
       const leftPct = Number(document.getElementById('rangeLeft').value);
       const rightPct = Number(document.getElementById('rangeRight').value);
@@ -745,6 +794,7 @@
       const minInkPct = Number(document.getElementById('rangeMinInk').value);
 
       document.getElementById('valTop').textContent = topPct + '%';
+      document.getElementById('valHeaderH').textContent = headerHPct + '%';
       document.getElementById('valBottom').textContent = bottomPct + '%';
       document.getElementById('valLeft').textContent = leftPct + '%';
       document.getElementById('valRight').textContent = rightPct + '%';
@@ -762,15 +812,33 @@
       ctx.drawImage(loadedImageTTD, 0, 0, canvas.width, canvas.height);
 
       const areaX = Math.round((leftPct / 100) * canvas.width);
-      const areaY = Math.round((topPct / 100) * canvas.height);
+      const headerTopY = Math.round((topPct / 100) * canvas.height);
+      const headerH = Math.round((headerHPct / 100) * canvas.height);
+      const dataStartY = headerTopY + headerH;
       const areaW = Math.max(10, Math.round(((rightPct - leftPct) / 100) * canvas.width));
-      const areaH = Math.max(10, Math.round(((bottomPct - topPct) / 100) * canvas.height));
+      const areaBottomY = Math.round((bottomPct / 100) * canvas.height);
+      const dataTotalH = Math.max(10, areaBottomY - dataStartY);
+
+      // Gambar Kotak JUDUL di bagian atas kolom TTD
+      if (headerH > 2) {
+        ctx.fillStyle = 'rgba(14, 165, 233, 0.25)';
+        ctx.fillRect(areaX, headerTopY, areaW, headerH);
+        ctx.strokeStyle = '#0ea5e9';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(areaX, headerTopY, areaW, headerH);
+
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(areaX - 44, headerTopY, 42, Math.max(14, headerH));
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText('JUDUL', areaX - 40, headerTopY + Math.min(12, Math.max(10, headerH - 3)));
+      }
 
       const totalRows = paperRows.length;
-      const rowHeight = areaH / totalRows;
+      const rowHeight = dataTotalH / totalRows;
 
       paperRows.forEach((row, idx) => {
-        const boxY = Math.round(areaY + idx * rowHeight);
+        const boxY = Math.round(dataStartY + idx * rowHeight);
         const boxH = Math.max(4, Math.round(rowHeight));
 
         const padX = Math.round(areaW * 0.12);
@@ -792,25 +860,30 @@
         const inkRatio = (darkPixels / totalPixels) * 100;
         row.inkScore = inkRatio.toFixed(1);
 
-        const isHadir = inkRatio >= minInkPct;
-        row.status = isHadir ? 'H' : 'A';
+        const hasSignature = inkRatio >= minInkPct;
+        // Jika ada coretan -> Hadir ('H'); jika tidak ada -> Tidak Hadir (default 'A', dikonfirmasi di akhir)
+        if (hasSignature) {
+          row.status = 'H';
+        } else if (row.status === 'H') {
+          row.status = 'A';
+        }
 
-        ctx.strokeStyle = isHadir ? '#22c55e' : '#ef4444';
+        ctx.strokeStyle = hasSignature ? '#22c55e' : '#ef4444';
         ctx.lineWidth = 2;
         ctx.strokeRect(areaX, boxY, areaW, boxH);
 
-        ctx.fillStyle = isHadir ? 'rgba(22, 163, 74, 0.85)' : 'rgba(220, 38, 38, 0.85)';
-        ctx.fillRect(areaX - 36, boxY + 1, 34, Math.max(12, boxH - 2));
+        ctx.fillStyle = hasSignature ? 'rgba(22, 163, 74, 0.9)' : 'rgba(220, 38, 38, 0.9)';
+        ctx.fillRect(areaX - 44, boxY + 1, 42, Math.max(12, boxH - 2));
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 10px sans-serif';
-        ctx.fillText(`${row.paperNo}.${isHadir ? 'H' : 'A'}`, areaX - 33, boxY + Math.min(13, boxH - 3));
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText(`${row.paperNo}.${hasSignature ? 'H' : 'TH'}`, areaX - 41, boxY + Math.min(12, boxH - 3));
       });
 
       renderDaftarHasilAbsen();
     }
 
     // ==========================================
-    // 5. RENDER UI MAPPING KERTAS & DAFTAR ABSEN
+    // 5. RENDER UI & MODAL KONFIRMASI AKHIR
     // ==========================================
     function renderSemuaUI() {
       renderMappingKertas();
@@ -853,7 +926,7 @@
               <div class="flex items-center gap-1.5 flex-1 min-w-[180px]">
                 ${badge}
                 <select onchange="ubahMappingDB(${idx}, this.value)" class="flex-1 min-w-0 border border-slate-200 rounded px-1.5 py-1 text-[11px] bg-white text-slate-700">
-                  <option value="NEW" ${isNew ? 'selected' : ''}>-- Tidak ada di DB (Orang Baru) --</option>
+                  <option value="NEW" ${isNew ? 'selected' : ''}>-- Tidak ada di DB (Anggota Baru) --</option>
                   ${optionsDB}
                 </select>
               </div>
@@ -877,56 +950,146 @@
         return;
       }
 
-      let countH = 0, countA = 0, countIS = 0;
+      let countH = 0, countTH = 0;
 
       container.innerHTML = paperRows.map((row, idx) => {
         const st = row.status || 'A';
-        if (st === 'H') countH++;
-        else if (st === 'A') countA++;
-        else countIS++;
+        const isHadir = st === 'H';
+        if (isHadir) countH++;
+        else countTH++;
 
         const inkInfo = row.inkScore !== null ? ` • Tinta: ${row.inkScore}%` : '';
-        const targetDbInfo = row.dbRowIndex
-          ? `<span class="text-emerald-700 font-medium">→ Masuk ke: ${row.dbName}</span>`
-          : row.addToDb
-            ? `<span class="text-amber-700 font-bold">→ Tambah Row Baru ke DB</span>`
-            : `<span class="text-slate-400">→ Dilewati (Tidak di DB)</span>`;
+        const statusBadge = isHadir
+          ? `<span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">HADIR (H)</span>`
+          : `<span class="text-[10px] font-bold bg-red-100 text-red-800 px-2 py-0.5 rounded">TIDAK HADIR (${st})</span>`;
 
-        const btnClass = (kode, activeColor) =>
-          st === kode
-            ? `${activeColor} text-white font-bold shadow-sm`
-            : `bg-slate-100 text-slate-600 hover:bg-slate-200`;
+        const targetDbInfo = row.dbRowIndex
+          ? `<span class="text-slate-600">→ ${row.dbName}</span>`
+          : row.addToDb
+            ? `<span class="text-amber-700 font-semibold">→ Tambah Row Baru</span>`
+            : `<span class="text-slate-400">→ Dilewati</span>`;
 
         return `
           <div class="py-2.5 flex items-center justify-between gap-2">
             <div class="min-w-0">
-              <p class="text-sm font-semibold text-slate-800 truncate">
-                <span class="text-slate-400 font-mono mr-1">Kertas #${row.paperNo}.</span>${row.paperName || '(Tanpa Nama)'}
-              </p>
-              <p class="text-[11px] text-slate-500 truncate">${targetDbInfo}${inkInfo}</p>
+              <div class="flex items-center gap-1.5">
+                <p class="text-sm font-semibold text-slate-800 truncate">
+                  <span class="text-slate-400 font-mono mr-1">#${row.paperNo}.</span>${row.paperName || '(Tanpa Nama)'}
+                </p>
+              </div>
+              <p class="text-[11px] text-slate-500 truncate mt-0.5">${targetDbInfo}${inkInfo}</p>
             </div>
-            <div class="flex gap-1 shrink-0">
-              <button onclick="ubahStatusKertas(${idx}, 'H')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('H', 'bg-emerald-600')}">H</button>
-              <button onclick="ubahStatusKertas(${idx}, 'A')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('A', 'bg-red-600')}">A</button>
-              <button onclick="ubahStatusKertas(${idx}, 'I')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('I', 'bg-amber-500')}">I</button>
-              <button onclick="ubahStatusKertas(${idx}, 'S')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('S', 'bg-cyan-600')}">S</button>
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${statusBadge}
+              <button onclick="toggleHadirTidakHadir(${idx})" class="text-[11px] px-2 py-1 rounded border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium">
+                Ubah
+              </button>
             </div>
           </div>
         `;
       }).join('');
 
-      document.getElementById('countH').textContent = `H: ${countH}`;
-      document.getElementById('countA').textContent = `A: ${countA}`;
-      document.getElementById('countIS').textContent = `I/S: ${countIS}`;
+      document.getElementById('countH').textContent = `Hadir: ${countH}`;
+      document.getElementById('countTH').textContent = `Tidak Hadir: ${countTH}`;
+      document.getElementById('labelRingkasanBawah').textContent = `Hadir: ${countH} • Tidak Hadir: ${countTH}`;
     }
 
-    function ubahStatusKertas(idx, statusBaru) {
-      paperRows[idx].status = statusBaru;
+    function toggleHadirTidakHadir(idx) {
+      paperRows[idx].status = paperRows[idx].status === 'H' ? 'A' : 'H';
       renderDaftarHasilAbsen();
     }
 
     // ==========================================
-    // 6. KIRIM HASIL KE SPREADSHEET (BY NAMA + ADD NEW ROWS)
+    // 6. LOGIKA MODAL KONFIRMASI AKHIR
+    // ==========================================
+    function bukaModalKonfirmasi() {
+      const bulan = document.getElementById('selectBulan').value;
+      const minggu = document.getElementById('selectMinggu').value;
+      document.getElementById('modalTargetLabel').textContent = `Target: ${bulan} - Minggu ke-${minggu}`;
+
+      renderIsiModalKonfirmasi();
+      document.getElementById('modalKonfirmasi').classList.remove('hidden');
+    }
+
+    function tutupModalKonfirmasi() {
+      document.getElementById('modalKonfirmasi').classList.add('hidden');
+    }
+
+    function setStatusKonfirmasi(idx, kodeStatus) {
+      paperRows[idx].status = kodeStatus;
+      renderDaftarHasilAbsen();
+      renderIsiModalKonfirmasi();
+    }
+
+    function renderIsiModalKonfirmasi() {
+      let cH = 0, cA = 0, cS = 0, cI = 0;
+      paperRows.forEach(r => {
+        if (r.status === 'H') cH++;
+        else if (r.status === 'S') cS++;
+        else if (r.status === 'I') cI++;
+        else cA++;
+      });
+
+      document.getElementById('konfCountH').textContent = cH;
+      document.getElementById('konfCountA').textContent = cA;
+      document.getElementById('konfCountS').textContent = cS;
+      document.getElementById('konfCountI').textContent = cI;
+
+      // Info penambahan row baru jika ada
+      const baruCount = paperRows.filter(r => r.dbRowIndex === null && r.addToDb && r.paperName.trim() !== '').length;
+      const infoRowEl = document.getElementById('infoTambahRowModal');
+      if (baruCount > 0) {
+        infoRowEl.classList.remove('hidden');
+        infoRowEl.textContent = `+ ${baruCount} baris anggota baru akan otomatis ditambahkan ke Spreadsheet.`;
+      } else {
+        infoRowEl.classList.add('hidden');
+      }
+
+      // Filter peserta yang TIDAK HADIR (selain 'H') untuk dikonfirmasi A / S / I
+      const tidakHadirList = paperRows
+        .map((row, idx) => ({ row, idx }))
+        .filter(item => item.row.status !== 'H');
+
+      const listContainer = document.getElementById('listKonfirmasiTidakHadir');
+      if (tidakHadirList.length === 0) {
+        listContainer.innerHTML = `
+          <div class="py-6 text-center text-xs text-emerald-700 font-semibold">
+            Semua peserta bertanda tangan (100% Hadir)!
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = tidakHadirList.map(({ row, idx }) => {
+        const st = row.status || 'A';
+        const btnStyle = (kode, activeClass) =>
+          st === kode
+            ? `${activeClass} text-white font-bold shadow-xs`
+            : `bg-slate-100 text-slate-600 hover:bg-slate-200`;
+
+        return `
+          <div class="py-3 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <p class="text-xs font-bold text-slate-800 truncate">
+                <span class="text-slate-400 font-mono mr-1">#${row.paperNo}.</span>${row.paperName || '(Tanpa Nama)'}
+              </p>
+              <p class="text-[11px] text-slate-500 truncate">
+                ${row.dbName ? `DB: ${row.dbName}` : (row.addToDb ? 'Anggota Baru (+Row)' : 'Tidak di DB')}
+              </p>
+            </div>
+            <div class="flex gap-1 shrink-0">
+              <button onclick="setStatusKonfirmasi(${idx}, 'A')" class="px-2.5 py-1.5 rounded-lg text-[11px] transition ${btnStyle('A', 'bg-red-600')}">Alpha</button>
+              <button onclick="setStatusKonfirmasi(${idx}, 'S')" class="px-2.5 py-1.5 rounded-lg text-[11px] transition ${btnStyle('S', 'bg-cyan-600')}">Sakit</button>
+              <button onclick="setStatusKonfirmasi(${idx}, 'I')" class="px-2.5 py-1.5 rounded-lg text-[11px] transition ${btnStyle('I', 'bg-amber-500')}">Izin</button>
+              <button onclick="setStatusKonfirmasi(${idx}, 'H')" class="px-2 py-1.5 rounded-lg text-[11px] transition bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100" title="Ubah jadi Hadir">H</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ==========================================
+    // 7. KIRIM HASIL AKHIR KE SPREADSHEET
     // ==========================================
     async function kirimKeSpreadsheet() {
       const bulan = document.getElementById('selectBulan').value;
@@ -937,7 +1100,6 @@
         return;
       }
 
-      // Data peserta yang sudah ada di DB (dikirim berdasarkan rowIndex & nama DB-nya)
       const absensiExisting = paperRows
         .filter(r => r.dbRowIndex !== null)
         .map(r => ({
@@ -946,7 +1108,6 @@
           status: r.status || 'A'
         }));
 
-      // Data orang baru yang dicentang "Tambah Row DB"
       const pesertaBaru = paperRows
         .filter(r => r.dbRowIndex === null && r.addToDb && r.paperName.trim() !== '')
         .map(r => ({
@@ -963,9 +1124,9 @@
         pesertaBaru: pesertaBaru
       };
 
-      const btn = document.getElementById('btnKirim');
+      const btn = document.getElementById('btnKirimFinal');
       btn.disabled = true;
-      btn.textContent = 'Menyimpan...';
+      btn.textContent = 'Menyimpan ke Sheets...';
 
       try {
         const response = await fetch(API_URL, {
@@ -976,8 +1137,9 @@
 
         const result = await response.json();
         if (result.status === 'success') {
+          tutupModalKonfirmasi();
           showToast(result.message, 5000);
-          // Jika ada penambahan row baru, refresh cache DB supaya baris baru langsung dikenali
+
           if (result.added > 0) {
             await muatDataAwal(true);
             paperRows.forEach(r => {
