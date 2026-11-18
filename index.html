@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Scanner Absensi Pramuka 58</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { -webkit-tap-highlight-color: transparent; }
+    input[type="range"] { accent-color: #16a34a; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-24">
+
+  <!-- Header -->
+  <header class="bg-emerald-700 text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div>
+        <h1 class="font-bold text-base leading-tight">Absensi Pramuka 58</h1>
+        <p class="text-xs text-emerald-100" id="statusKoneksi">Menghubungkan ke Spreadsheet...</p>
+      </div>
+      <button onclick="muatDataAwal()" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded-lg font-medium transition">
+        Refresh DB
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-2xl mx-auto px-4 pt-4 space-y-4">
+
+    <!-- Step 1: Pilih Jadwal (Bulan & Minggu) -->
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">1. Target Kolom Spreadsheet</h2>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Bulan</label>
+          <select id="selectBulan" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-emerald-600"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Minggu ke-</label>
+          <select id="selectMinggu" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-emerald-600"></select>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 mt-2" id="infoPesertaAktif">Memuat data peserta...</p>
+    </section>
+
+    <!-- Step 2: Ambil / Upload Foto Halaman Folio -->
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Foto Kolom TTD Buku Folio</h2>
+        <span class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium">Posisikan Tegak Lurus</span>
+      </div>
+
+      <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-emerald-400 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 cursor-pointer transition">
+        <div class="text-center px-4">
+          <p class="text-sm font-semibold text-emerald-700">Ambil Foto / Pilih Gambar Absen</p>
+          <p class="text-xs text-slate-500 mt-0.5">Mendukung kamera langsung atau galeri HP</p>
+        </div>
+        <input type="file" id="inputFoto" accept="image/*" capture="environment" class="hidden" />
+      </label>
+
+      <!-- Area Canvas Preview & Kalibrasi Grid -->
+      <div id="areaKalibrasi" class="hidden space-y-3 pt-2">
+        <div class="relative w-full overflow-hidden rounded-lg border border-slate-300 bg-slate-900 flex justify-center">
+          <canvas id="canvasPreview" class="max-w-full h-auto block"></canvas>
+        </div>
+
+        <!-- Kontrol Kalibrasi Kotak TTD -->
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-700">Kalibrasi Posisi Kolom TTD</span>
+            <button onclick="resetKalibrasi()" class="text-emerald-700 font-semibold underline">Reset Posisi</button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div>
+              <div class="flex justify-between text-slate-600"><span>Batas Atas</span><span id="valTop">10%</span></div>
+              <input type="range" id="rangeTop" min="0" max="80" value="10" class="w-full" oninput="prosesDeteksiTinta()" />
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-600"><span>Batas Bawah</span><span id="valBottom">92%</span></div>
+              <input type="range" id="rangeBottom" min="20" max="100" value="92" class="w-full" oninput="prosesDeteksiTinta()" />
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-600"><span>Kiri Kolom TTD</span><span id="valLeft">65%</span></div>
+              <input type="range" id="rangeLeft" min="0" max="95" value="65" class="w-full" oninput="prosesDeteksiTinta()" />
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-600"><span>Kanan Kolom TTD</span><span id="valRight">95%</span></div>
+              <input type="range" id="rangeRight" min="5" max="100" value="95" class="w-full" oninput="prosesDeteksiTinta()" />
+            </div>
+          </div>
+
+          <div class="pt-1 border-t border-slate-200 grid grid-cols-2 gap-x-4 gap-y-2">
+            <div>
+              <div class="flex justify-between text-slate-600"><span>Kepekatan Tinta</span><span id="valDarkness">135</span></div>
+              <input type="range" id="rangeDarkness" min="60" max="210" value="135" class="w-full" oninput="prosesDeteksiTinta()" />
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-600"><span>Min. Coretan (%)</span><span id="valMinInk">2.5%</span></div>
+              <input type="range" id="rangeMinInk" min="0.5" max="15" step="0.5" value="2.5" class="w-full" oninput="prosesDeteksiTinta()" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: Daftar Hasil Scan & Koreksi Manual -->
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">3. Hasil & Koreksi Cepat</h2>
+        <div class="flex gap-1.5 text-[11px] font-bold">
+          <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded" id="countH">H: 0</span>
+          <span class="bg-red-100 text-red-800 px-2 py-0.5 rounded" id="countA">A: 0</span>
+          <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded" id="countIS">I/S: 0</span>
+        </div>
+      </div>
+
+      <div id="listPesertaContainer" class="divide-y divide-slate-100">
+        <p class="text-sm text-slate-400 text-center py-6">Belum ada data dimuat.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Bottom Action Bar -->
+  <div class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 p-3 shadow-lg z-30">
+    <div class="max-w-2xl mx-auto flex items-center justify-between gap-3">
+      <div class="text-xs text-slate-600">
+        Target: <strong id="labelTargetKirim" class="text-slate-900">-</strong>
+      </div>
+      <button id="btnKirim" onclick="kirimKeSpreadsheet()" disabled
+        class="bg-emerald-600 disabled:bg-slate-300 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow transition">
+        Simpan ke Spreadsheet
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Notifikasi -->
+  <div id="toast" class="fixed top-16 inset-x-4 max-w-md mx-auto bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-xl hidden z-50 text-center"></div>
+
+  <script>
+    // ==========================================
+    // KONFIGURASI API GOOGLE APPS SCRIPT
+    // ==========================================
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwRRpji_u-7MnTxKvwvhL8S6A8h5HqOGJVkzLmptFsqVJj0B6OHgRK7Q4ufIzW7PdWzTA/exec';
+    const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
+
+    // State Aplikasi
+    let rawJadwal = [];
+    let rawPeserta = [];
+    let pesertaAktif = [];
+    let statusMap = {};      // { noPeserta: 'H' | 'A' | 'I' | 'S' }
+    let inkScoreMap = {};    // { noPeserta: 4.2 }
+    let loadedImage = null;
+
+    // Inisialisasi saat halaman dibuka
+    window.addEventListener('DOMContentLoaded', () => {
+      muatDataAwal();
+      document.getElementById('inputFoto').addEventListener('change', handleUploadFoto);
+      document.getElementById('selectBulan').addEventListener('change', updateDropdownMinggu);
+      document.getElementById('selectMinggu').addEventListener('change', filterPesertaAktif);
+    });
+
+    function showToast(msg, duration = 3500) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => el.classList.add('hidden'), duration);
+    }
+
+    // 1. Tarik Data Struktur Kolom & Daftar Peserta dari Google Sheets
+    async function muatDataAwal() {
+      const statusEl = document.getElementById('statusKoneksi');
+      statusEl.textContent = 'Menyinkronkan data dari Sheets...';
+      try {
+        const res = await fetch(`${API_URL}?token=${encodeURIComponent(API_TOKEN)}`);
+        const data = await res.json();
+
+        if (data.status !== 'success') {
+          throw new Error(data.message || 'Gagal memuat data.');
+        }
+
+        rawJadwal = data.jadwal || [];
+        rawPeserta = data.peserta || [];
+
+        isiDropdownBulan();
+        statusEl.textContent = `Terhubung: ${data.sheetName}`;
+        document.getElementById('btnKirim').disabled = false;
+      } catch (err) {
+        statusEl.textContent = 'Gagal terhubung ke Spreadsheet';
+        showToast('Error: ' + err.message, 5000);
+      }
+    }
+
+    function isiDropdownBulan() {
+      const selectBulan = document.getElementById('selectBulan');
+      const bulanUnik = [...new Set(rawJadwal.map(j => j.bulan))];
+      selectBulan.innerHTML = bulanUnik.map(b => `<option value="${b}">${b}</option>`).join('');
+
+      // Otomatis pilih November 2026 jika ada
+      if (bulanUnik.includes('November 2026')) {
+        selectBulan.value = 'November 2026';
+      }
+      updateDropdownMinggu();
+    }
+
+    function updateDropdownMinggu() {
+      const bulanTerpilih = document.getElementById('selectBulan').value;
+      const selectMinggu = document.getElementById('selectMinggu');
+      const mingguList = rawJadwal.filter(j => j.bulan === bulanTerpilih);
+
+      selectMinggu.innerHTML = mingguList
+        .map(m => `<option value="${m.minggu}" data-col="${m.colIndex}">Minggu ke-${m.minggu} (Kolom ${m.colLetter})</option>`)
+        .join('');
+
+      filterPesertaAktif();
+    }
+
+    function filterPesertaAktif() {
+      const bulan = document.getElementById('selectBulan').value;
+      const selectMinggu = document.getElementById('selectMinggu');
+      const minggu = Number(selectMinggu.value);
+      const selectedOption = selectMinggu.options[selectMinggu.selectedIndex];
+      const colIndex = selectedOption ? Number(selectedOption.dataset.col) : null;
+
+      document.getElementById('labelTargetKirim').textContent = `${bulan} - M${minggu}`;
+
+      // Saring peserta yang TIDAK berstatus ~PURNA~ di kolom target
+      pesertaAktif = rawPeserta.filter(p => !p.purnaCols.includes(colIndex));
+
+      // Set default status 'A' untuk peserta yang belum punya status
+      pesertaAktif.forEach(p => {
+        if (!statusMap[p.no]) statusMap[p.no] = 'A';
+      });
+
+      document.getElementById('infoPesertaAktif').textContent =
+        `Peserta aktif pada kolom ini: ${pesertaAktif.length} orang (Peserta ~PURNA~ otomatis dilewati).`;
+
+      renderDaftarPeserta();
+      if (loadedImage) prosesDeteksiTinta();
+    }
+
+    // 2. Tangani Input Gambar dari Kamera / Galeri
+    function handleUploadFoto(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          loadedImage = img;
+          document.getElementById('areaKalibrasi').classList.remove('hidden');
+          prosesDeteksiTinta();
+          showToast('Foto dimuat! Sesuaikan slider hijau agar pas dengan kolom TTD.');
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function resetKalibrasi() {
+      document.getElementById('rangeTop').value = 10;
+      document.getElementById('rangeBottom').value = 92;
+      document.getElementById('rangeLeft').value = 65;
+      document.getElementById('rangeRight').value = 95;
+      document.getElementById('rangeDarkness').value = 135;
+      document.getElementById('rangeMinInk').value = 2.5;
+      prosesDeteksiTinta();
+    }
+
+    // 3. Mesin Deteksi Kepadatan Tinta TTD (Client-Side HTML5 Canvas)
+    function prosesDeteksiTinta() {
+      if (!loadedImage || pesertaAktif.length === 0) return;
+
+      const topPct = Number(document.getElementById('rangeTop').value);
+      const bottomPct = Number(document.getElementById('rangeBottom').value);
+      const leftPct = Number(document.getElementById('rangeLeft').value);
+      const rightPct = Number(document.getElementById('rangeRight').value);
+      const darknessThreshold = Number(document.getElementById('rangeDarkness').value);
+      const minInkPct = Number(document.getElementById('rangeMinInk').value);
+
+      // Update label angka slider
+      document.getElementById('valTop').textContent = topPct + '%';
+      document.getElementById('valBottom').textContent = bottomPct + '%';
+      document.getElementById('valLeft').textContent = leftPct + '%';
+      document.getElementById('valRight').textContent = rightPct + '%';
+      document.getElementById('valDarkness').textContent = darknessThreshold;
+      document.getElementById('valMinInk').textContent = minInkPct + '%';
+
+      const canvas = document.getElementById('canvasPreview');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+      // Resize lebar maksimal 900px agar ringan dan cepat di HP
+      const maxWidth = 900;
+      const scale = loadedImage.width > maxWidth ? maxWidth / loadedImage.width : 1;
+      canvas.width = Math.round(loadedImage.width * scale);
+      canvas.height = Math.round(loadedImage.height * scale);
+
+      // Gambar foto asli ke canvas
+      ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+
+      // Hitung area bounding box total kolom TTD
+      const areaX = Math.round((leftPct / 100) * canvas.width);
+      const areaY = Math.round((topPct / 100) * canvas.height);
+      const areaW = Math.max(10, Math.round(((rightPct - leftPct) / 100) * canvas.width));
+      const areaH = Math.max(10, Math.round(((bottomPct - topPct) / 100) * canvas.height));
+
+      const totalRows = pesertaAktif.length;
+      const rowHeight = areaH / totalRows;
+
+      pesertaAktif.forEach((p, idx) => {
+        const boxY = Math.round(areaY + idx * rowHeight);
+        const boxH = Math.max(4, Math.round(rowHeight));
+
+        // Padding dalam 12% agar garis horizontal/vertikal tabel tidak ikut terhitung sebagai tinta TTD
+        const padX = Math.round(areaW * 0.12);
+        const padY = Math.round(boxH * 0.15);
+        const sampleX = areaX + padX;
+        const sampleY = boxY + padY;
+        const sampleW = Math.max(2, areaW - padX * 2);
+        const sampleH = Math.max(2, boxH - padY * 2);
+
+        const imgData = ctx.getImageData(sampleX, sampleY, sampleW, sampleH).data;
+        let darkPixels = 0;
+        const totalPixels = sampleW * sampleH;
+
+        for (let i = 0; i < imgData.length; i += 4) {
+          const r = imgData[i];
+          const g = imgData[i + 1];
+          const b = imgData[i + 2];
+          // Konversi luminance grayscale
+          const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+          if (gray < darknessThreshold) {
+            darkPixels++;
+          }
+        }
+
+        const inkRatio = (darkPixels / totalPixels) * 100;
+        inkScoreMap[p.no] = inkRatio.toFixed(1);
+
+        const isHadir = inkRatio >= minInkPct;
+        statusMap[p.no] = isHadir ? 'H' : 'A';
+
+        // Gambar visual kotak hasil deteksi di atas foto
+        ctx.strokeStyle = isHadir ? '#22c55e' : '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(areaX, boxY, areaW, boxH);
+
+        // Label nomor & status di samping kiri kotak
+        ctx.fillStyle = isHadir ? 'rgba(22, 163, 74, 0.85)' : 'rgba(220, 38, 38, 0.85)';
+        ctx.fillRect(areaX - 36, boxY + 1, 34, Math.max(12, boxH - 2));
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText(`${p.no}.${isHadir ? 'H' : 'A'}`, areaX - 33, boxY + Math.min(13, boxH - 3));
+      });
+
+      renderDaftarPeserta();
+    }
+
+    // 4. Render Daftar Peserta & Tombol Koreksi Manual (H / A / I / S)
+    function renderDaftarPeserta() {
+      const container = document.getElementById('listPesertaContainer');
+      if (pesertaAktif.length === 0) {
+        container.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Tidak ada peserta aktif.</p>';
+        return;
+      }
+
+      let countH = 0, countA = 0, countIS = 0;
+
+      container.innerHTML = pesertaAktif.map(p => {
+        const st = statusMap[p.no] || 'A';
+        if (st === 'H') countH++;
+        else if (st === 'A') countA++;
+        else countIS++;
+
+        const inkInfo = inkScoreMap[p.no] !== undefined ? ` • Tinta: ${inkScoreMap[p.no]}%` : '';
+
+        const btnClass = (kode, activeColor) =>
+          st === kode
+            ? `${activeColor} text-white font-bold shadow-sm`
+            : `bg-slate-100 text-slate-600 hover:bg-slate-200`;
+
+        return `
+          <div class="py-2.5 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-slate-800 truncate">
+                <span class="text-slate-400 font-mono mr-1">${p.no}.</span>${p.nama}
+              </p>
+              <p class="text-[11px] text-slate-500">${p.kelas}${inkInfo}</p>
+            </div>
+            <div class="flex gap-1 shrink-0">
+              <button onclick="ubahStatus(${p.no}, 'H')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('H', 'bg-emerald-600')}">H</button>
+              <button onclick="ubahStatus(${p.no}, 'A')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('A', 'bg-red-600')}">A</button>
+              <button onclick="ubahStatus(${p.no}, 'I')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('I', 'bg-amber-500')}">I</button>
+              <button onclick="ubahStatus(${p.no}, 'S')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('S', 'bg-cyan-600')}">S</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('countH').textContent = `H: ${countH}`;
+      document.getElementById('countA').textContent = `A: ${countA}`;
+      document.getElementById('countIS').textContent = `I/S: ${countIS}`;
+    }
+
+    function ubahStatus(noPeserta, statusBaru) {
+      statusMap[noPeserta] = statusBaru;
+      renderDaftarPeserta();
+    }
+
+    // 5. Kirim Hasil Akhir ke Google Sheets via Apps Script (doPost)
+    async function kirimKeSpreadsheet() {
+      const bulan = document.getElementById('selectBulan').value;
+      const minggu = Number(document.getElementById('selectMinggu').value);
+
+      if (!bulan || !minggu) {
+        showToast('Pilih Bulan dan Minggu terlebih dahulu.');
+        return;
+      }
+
+      const payload = {
+        token: API_TOKEN,
+        bulan: bulan,
+        minggu: minggu,
+        absensi: pesertaAktif.map(p => ({
+          no: p.no,
+          status: statusMap[p.no] || 'A'
+        }))
+      };
+
+      const btn = document.getElementById('btnKirim');
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan...';
+
+      try {
+        // Menggunakan text/plain agar terhindar dari blokir CORS preflight Apps Script
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (result.status === 'success') {
+          showToast(result.message, 5000);
+        } else {
+          throw new Error(result.message || 'Gagal menyimpan data.');
+        }
+      } catch (err) {
+        showToast('Gagal kirim: ' + err.message, 5000);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Simpan ke Spreadsheet';
+      }
+    }
+  </script>
+</body>
+</html>
