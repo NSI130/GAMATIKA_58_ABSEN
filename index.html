@@ -17,9 +17,9 @@
     <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
       <div>
         <h1 class="font-bold text-base leading-tight">Absensi Pramuka 58</h1>
-        <p class="text-xs text-emerald-100" id="statusKoneksi">Menghubungkan ke Spreadsheet...</p>
+        <p class="text-xs text-emerald-100" id="statusKoneksi">Memuat data...</p>
       </div>
-      <button onclick="muatDataAwal()" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded-lg font-medium transition">
+      <button onclick="muatDataAwal(true)" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded-lg font-medium transition">
         Refresh DB
       </button>
     </div>
@@ -142,8 +142,9 @@
     // ==========================================
     // KONFIGURASI API GOOGLE APPS SCRIPT
     // ==========================================
-    const API_URL = 'https://script.google.com/macros/s/AKfycby1iojbdCfPJX1zFeU-gP4uJkqsn2SL_A8_a3ypL3fOaWBkc-S9JtfkuAkgabXHo5n0gg/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzStwY4isj73dgvM7y6EoVvhJf5DZKHkAns-9kn7med1PnulZT1ezw8hRBh9PpRh1xBdw/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
+    const CACHE_KEY = 'pramuka58_db_cache_v2';
 
     // State Aplikasi
     let rawJadwal = [];
@@ -155,7 +156,7 @@
 
     // Inisialisasi saat halaman dibuka
     window.addEventListener('DOMContentLoaded', () => {
-      muatDataAwal();
+      muatDataAwal(false);
       document.getElementById('inputFoto').addEventListener('change', handleUploadFoto);
       document.getElementById('selectBulan').addEventListener('change', updateDropdownMinggu);
       document.getElementById('selectMinggu').addEventListener('change', filterPesertaAktif);
@@ -169,10 +170,28 @@
       el._timer = setTimeout(() => el.classList.add('hidden'), duration);
     }
 
-    // 1. Tarik Data Struktur Kolom & Daftar Peserta dari Google Sheets
-    async function muatDataAwal() {
+    function terapkanDataKeUI(data, sumberLabel) {
+      rawJadwal = data.jadwal || [];
+      rawPeserta = data.peserta || [];
+      isiDropdownBulan();
+      document.getElementById('statusKoneksi').textContent = `Terhubung: ${data.sheetName} (${sumberLabel})`;
+      document.getElementById('btnKirim').disabled = false;
+    }
+
+    // 1. Tarik Data Struktur Kolom & Daftar Peserta (Instant Cache + Background Sync)
+    async function muatDataAwal(forceRefresh = false) {
       const statusEl = document.getElementById('statusKoneksi');
-      statusEl.textContent = 'Menyinkronkan data dari Sheets...';
+      const startTime = performance.now();
+
+      const cachedRaw = localStorage.getItem(CACHE_KEY);
+      if (cachedRaw && !forceRefresh) {
+        try {
+          terapkanDataKeUI(JSON.parse(cachedRaw), 'Cache Instan');
+        } catch (e) {}
+      } else {
+        statusEl.textContent = 'Menyinkronkan ke Sheets...';
+      }
+
       try {
         const res = await fetch(`${API_URL}?token=${encodeURIComponent(API_TOKEN)}`);
         const data = await res.json();
@@ -181,25 +200,28 @@
           throw new Error(data.message || 'Gagal memuat data.');
         }
 
-        rawJadwal = data.jadwal || [];
-        rawPeserta = data.peserta || [];
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        const durasi = ((performance.now() - startTime) / 1000).toFixed(1);
+        terapkanDataKeUI(data, `Sync ${durasi}d`);
 
-        isiDropdownBulan();
-        statusEl.textContent = `Terhubung: ${data.sheetName}`;
-        document.getElementById('btnKirim').disabled = false;
+        if (forceRefresh) showToast(`Database diperbarui (${durasi} detik)`);
       } catch (err) {
-        statusEl.textContent = 'Gagal terhubung ke Spreadsheet';
+        if (!cachedRaw) {
+          statusEl.textContent = 'Gagal terhubung ke Spreadsheet';
+        }
         showToast('Error: ' + err.message, 5000);
       }
     }
 
     function isiDropdownBulan() {
       const selectBulan = document.getElementById('selectBulan');
+      const bulanSebelumnya = selectBulan.value;
       const bulanUnik = [...new Set(rawJadwal.map(j => j.bulan))];
       selectBulan.innerHTML = bulanUnik.map(b => `<option value="${b}">${b}</option>`).join('');
 
-      // Otomatis pilih November jika ada
-      if (bulanUnik.includes('November')) {
+      if (bulanSebelumnya && bulanUnik.includes(bulanSebelumnya)) {
+        selectBulan.value = bulanSebelumnya;
+      } else if (bulanUnik.includes('November')) {
         selectBulan.value = 'November';
       } else if (bulanUnik.includes('November 2026')) {
         selectBulan.value = 'November 2026';
@@ -210,12 +232,16 @@
     function updateDropdownMinggu() {
       const bulanTerpilih = document.getElementById('selectBulan').value;
       const selectMinggu = document.getElementById('selectMinggu');
+      const mingguSebelumnya = selectMinggu.value;
       const mingguList = rawJadwal.filter(j => j.bulan === bulanTerpilih);
 
       selectMinggu.innerHTML = mingguList
         .map(m => `<option value="${m.minggu}" data-col="${m.colIndex}">Minggu ke-${m.minggu} (Kolom ${m.colLetter})</option>`)
         .join('');
 
+      if (mingguSebelumnya && mingguList.some(m => String(m.minggu) === mingguSebelumnya)) {
+        selectMinggu.value = mingguSebelumnya;
+      }
       filterPesertaAktif();
     }
 
@@ -283,7 +309,6 @@
       const darknessThreshold = Number(document.getElementById('rangeDarkness').value);
       const minInkPct = Number(document.getElementById('rangeMinInk').value);
 
-      // Update label angka slider
       document.getElementById('valTop').textContent = topPct + '%';
       document.getElementById('valBottom').textContent = bottomPct + '%';
       document.getElementById('valLeft').textContent = leftPct + '%';
@@ -294,16 +319,13 @@
       const canvas = document.getElementById('canvasPreview');
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-      // Resize lebar maksimal 900px agar ringan dan cepat di HP
       const maxWidth = 900;
       const scale = loadedImage.width > maxWidth ? maxWidth / loadedImage.width : 1;
       canvas.width = Math.round(loadedImage.width * scale);
       canvas.height = Math.round(loadedImage.height * scale);
 
-      // Gambar foto asli ke canvas
       ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
 
-      // Hitung area bounding box total kolom TTD
       const areaX = Math.round((leftPct / 100) * canvas.width);
       const areaY = Math.round((topPct / 100) * canvas.height);
       const areaW = Math.max(10, Math.round(((rightPct - leftPct) / 100) * canvas.width));
@@ -316,7 +338,6 @@
         const boxY = Math.round(areaY + idx * rowHeight);
         const boxH = Math.max(4, Math.round(rowHeight));
 
-        // Padding dalam 12% agar garis horizontal/vertikal tabel tidak ikut terhitung sebagai tinta TTD
         const padX = Math.round(areaW * 0.12);
         const padY = Math.round(boxH * 0.15);
         const sampleX = areaX + padX;
@@ -332,7 +353,6 @@
           const r = imgData[i];
           const g = imgData[i + 1];
           const b = imgData[i + 2];
-          // Konversi luminance grayscale
           const gray = 0.299 * r + 0.587 * g + 0.114 * b;
           if (gray < darknessThreshold) {
             darkPixels++;
@@ -345,12 +365,10 @@
         const isHadir = inkRatio >= minInkPct;
         statusMap[p.no] = isHadir ? 'H' : 'A';
 
-        // Gambar visual kotak hasil deteksi di atas foto
         ctx.strokeStyle = isHadir ? '#22c55e' : '#ef4444';
         ctx.lineWidth = 2;
         ctx.strokeRect(areaX, boxY, areaW, boxH);
 
-        // Label nomor & status di samping kiri kotak
         ctx.fillStyle = isHadir ? 'rgba(22, 163, 74, 0.85)' : 'rgba(220, 38, 38, 0.85)';
         ctx.fillRect(areaX - 36, boxY + 1, 34, Math.max(12, boxH - 2));
         ctx.fillStyle = '#ffffff';
@@ -437,7 +455,6 @@
       btn.textContent = 'Menyimpan...';
 
       try {
-        // Menggunakan text/plain agar terhindar dari blokir CORS preflight Apps Script
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
