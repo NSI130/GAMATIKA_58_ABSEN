@@ -142,7 +142,7 @@
     // ==========================================
     // KONFIGURASI API GOOGLE APPS SCRIPT
     // ==========================================
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwRRpji_u-7MnTxKvwvhL8S6A8h5HqOGJVkzLmptFsqVJj0B6OHgRK7Q4ufIzW7PdWzTA/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycby1iojbdCfPJX1zFeU-gP4uJkqsn2SL_A8_a3ypL3fOaWBkc-S9JtfkuAkgabXHo5n0gg/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
 
     // State Aplikasi
@@ -198,8 +198,10 @@
       const bulanUnik = [...new Set(rawJadwal.map(j => j.bulan))];
       selectBulan.innerHTML = bulanUnik.map(b => `<option value="${b}">${b}</option>`).join('');
 
-      // Otomatis pilih November 2026 jika ada
-      if (bulanUnik.includes('November 2026')) {
+      // Otomatis pilih November jika ada
+      if (bulanUnik.includes('November')) {
+        selectBulan.value = 'November';
+      } else if (bulanUnik.includes('November 2026')) {
         selectBulan.value = 'November 2026';
       }
       updateDropdownMinggu();
