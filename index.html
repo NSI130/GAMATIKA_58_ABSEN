@@ -43,7 +43,7 @@
       </div>
 
       <div id="apiKeyReadyMode" class="flex items-center justify-between text-xs">
-        <span class="font-semibold text-emerald-700">✅ AI Vision Aktif (Gemini 2.5 Flash)</span>
+        <span class="font-semibold text-emerald-700" id="labelEngineAktif">✅ AI Vision Aktif (Gemini 2.5 Flash)</span>
         <button onclick="ubahGeminiKey()" class="text-slate-500 underline">Ganti API Key</button>
       </div>
     </section>
@@ -109,6 +109,12 @@
       <div id="loadingAI" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-center space-y-1">
         <p class="text-xs font-bold text-emerald-800 animate-pulse">AI sedang membaca tulisan tangan, mencocokkan nama ke DB & mengecek TTD...</p>
         <p class="text-[11px] text-emerald-600">Biasanya memakan waktu 3–6 detik</p>
+      </div>
+
+      <!-- Kotak Error Permanen Jika Terjadi Masalah -->
+      <div id="boxErrorAI" class="hidden bg-red-50 border border-red-300 rounded-xl p-3 text-xs text-red-800 space-y-1">
+        <p class="font-bold">⚠️ Detail Error AI:</p>
+        <p id="textErrorAI" class="font-mono text-[11px] break-words"></p>
       </div>
     </section>
 
@@ -191,10 +197,10 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbxHFjrh4q4VSUwA0s03OyRFfel8s78e0hP4YbzY-AQSCLiU_tcMepdrxhysEj6R4-ZWnw/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
-    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v3';
-    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_api_key_v3';
+    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v4';
+    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_api_key_v4';
 
-    // Default Gemini API Key dari Google AI Studio (Project 974922606408)
+    // Default Key Vertex AI Express (Project 974922606408)
     const DEFAULT_GEMINI_KEY = ['AQ.Ab8RN6LIKfg5gcpST9xi9X0', 'usp7Mlv18_K0AjJK9MHTANMEwLQ'].join('');
 
     let rawJadwal = [];
@@ -236,6 +242,8 @@
       if (key) {
         document.getElementById('apiKeyInputMode').classList.add('hidden');
         document.getElementById('apiKeyReadyMode').classList.remove('hidden');
+        const modeLabel = key.startsWith('AQ.') ? 'Vertex Express' : 'AI Studio';
+        document.getElementById('labelEngineAktif').textContent = `✅ AI Vision Aktif (${modeLabel} • Gemini 2.5 Flash)`;
       } else {
         document.getElementById('apiKeyInputMode').classList.remove('hidden');
         document.getElementById('apiKeyReadyMode').classList.add('hidden');
@@ -250,6 +258,7 @@
         return;
       }
       localStorage.setItem(GEMINI_KEY_STORAGE, val);
+      document.getElementById('boxErrorAI').classList.add('hidden');
       cekStatusApiKey();
       showToast('API Key tersimpan di browser HP!');
     }
@@ -378,6 +387,7 @@
       try {
         const compressed = await compressImageToBase64(file);
         document.getElementById('previewContainer').classList.remove('hidden');
+        document.getElementById('boxErrorAI').classList.add('hidden');
 
         if (slot === 1) {
           foto1Base64 = compressed;
@@ -421,43 +431,35 @@
     }
 
     // ==========================================
-    // 4. GEMINI VISION AI: BACA 3 KOLOM & COCOKKAN DB
+    // 4. GEMINI VISION AI (VERTEX EXPRESS & AI STUDIO)
     // ==========================================
     async function callGeminiEndpoint(apiKey, payloadBody) {
-      const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+      const urls = apiKey.startsWith('AQ.')
+        ? [
+            `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+            `https://aiplatform.googleapis.com/v1beta1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`
+          ]
+        : [
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`
+          ];
 
-      // Metode utama sesuai cURL quickstart Google AI Studio (x-goog-api-key header)
-      let response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        body: JSON.stringify(payloadBody)
-      });
+      let lastError = 'Gagal menghubungi server AI.';
 
-      let data = await response.json();
-
-      // Fallback ke Authorization Bearer jika key AQ. ditolak di x-goog-api-key
-      if (!response.ok && apiKey.startsWith('AQ.') && (response.status === 400 || response.status === 401 || response.status === 403)) {
-        const retryRes = await fetch(endpoint, {
+      for (const url of urls) {
+        const response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payloadBody)
         });
-        const retryData = await retryRes.json();
-        if (retryRes.ok) {
-          return retryData;
+
+        const data = await response.json();
+        if (response.ok) {
+          return data;
         }
+        lastError = data.error?.message || `HTTP ${response.status}`;
       }
 
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Gagal menghubungi Gemini AI.');
-      }
-      return data;
+      throw new Error(lastError);
     }
 
     async function prosesDenganAI() {
@@ -472,8 +474,10 @@
 
       const btn = document.getElementById('btnProsesAI');
       const loading = document.getElementById('loadingAI');
+      const boxError = document.getElementById('boxErrorAI');
       btn.disabled = true;
       loading.classList.remove('hidden');
+      boxError.classList.add('hidden');
 
       try {
         const rosterRingkas = dbAktif.map(p => ({
@@ -491,7 +495,7 @@ ${JSON.stringify(rosterRingkas)}
 Instruksi wajib:
 1. Baca setiap baris peserta di kertas absen secara berurutan dari atas ke bawah (1 sampai baris terakhir yang terisi).
 2. Cocokkan setiap nama & kelas di kertas dengan "namaDB" yang paling sesuai di daftar DB (perhatikan singkatan nama seperti "S.M" untuk "Satrio Manullang" atau perbedaan ejaan kecil tulisan tangan).
-3. Jika nama di kertas benar-benar orang baru yang tidak ada di daftar DB, isi "dbRowIndex": null, "namaDB": null, dan "isNew": true.
+3. Jika nama di kertas benar-benar orang baru yang tidak ada di daftar DB, isi "dbRowIndex": 0, "namaDB": "", dan "isNew": true.
 4. Periksa kolom TTD pada kolom minggu yang aktif (biasanya kolom paling kanan yang terisi coretan/huruf di bawah angka minggu ${minggu}):
    - Jika ada coretan tanda tangan / paraf -> isi "adaTTD": true, "catatanKolom": "Ada TTD".
    - Jika TIDAK ada tanda tangan (misalnya sel kosong, atau tertulis huruf seperti "I", "A", "S") -> isi "adaTTD": false, dan tuliskan apa yang terlihat di sel itu pada "catatanKolom" (contoh: "Kosong", "Tertulis: I", "Tertulis: A").
@@ -507,7 +511,7 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
         }
 
         const payloadBody = {
-          contents: [{ parts }],
+          contents: [{ role: 'user', parts }],
           generationConfig: {
             temperature: 0.1,
             responseMimeType: 'application/json',
@@ -519,13 +523,13 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
                   paperNo: { type: 'INTEGER' },
                   paperName: { type: 'STRING' },
                   paperClass: { type: 'STRING' },
-                  dbRowIndex: { type: 'INTEGER', nullable: true },
-                  namaDB: { type: 'STRING', nullable: true },
+                  dbRowIndex: { type: 'INTEGER' },
+                  namaDB: { type: 'STRING' },
                   isNew: { type: 'BOOLEAN' },
                   adaTTD: { type: 'BOOLEAN' },
                   catatanKolom: { type: 'STRING' }
                 },
-                required: ['paperNo', 'paperName', 'paperClass', 'isNew', 'adaTTD', 'catatanKolom']
+                required: ['paperNo', 'paperName', 'paperClass', 'dbRowIndex', 'namaDB', 'isNew', 'adaTTD', 'catatanKolom']
               }
             }
           }
@@ -542,7 +546,7 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
         }
 
         hasilAI = parsed.map((item, idx) => {
-          const validDbRow = item.dbRowIndex && dbAktif.some(d => d.rowIndex === item.dbRowIndex)
+          const validDbRow = item.dbRowIndex && item.dbRowIndex > 0 && dbAktif.some(d => d.rowIndex === item.dbRowIndex)
             ? item.dbRowIndex
             : null;
           const dbObj = validDbRow ? dbAktif.find(d => d.rowIndex === validDbRow) : null;
@@ -566,7 +570,9 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
         document.getElementById('sectionHasil').scrollIntoView({ behavior: 'smooth' });
         showToast(`AI selesai! Terbaca ${hasilAI.length} baris kertas.`);
       } catch (err) {
-        showToast('AI Error: ' + err.message, 6000);
+        document.getElementById('textErrorAI').textContent = err.message;
+        boxError.classList.remove('hidden');
+        showToast('AI Error: ' + err.message, 5000);
       } finally {
         loading.classList.add('hidden');
         updateTombolProses();
