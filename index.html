@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>AI Scanner Absensi Pramuka 58</title>
+  <title>Absensi Manual Pramuka 58</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
@@ -15,7 +15,7 @@
   <header class="bg-emerald-700 text-white shadow-md sticky top-0 z-30">
     <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
       <div>
-        <h1 class="font-bold text-base leading-tight">Absensi Pramuka 58 • AI</h1>
+        <h1 class="font-bold text-base leading-tight">Absensi Pramuka 58 • Manual</h1>
         <p class="text-xs text-emerald-100" id="statusKoneksi">Memuat data DB...</p>
       </div>
       <button onclick="muatDataAwal(true)" class="text-xs bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded-lg font-medium transition">
@@ -26,32 +26,9 @@
 
   <main class="max-w-2xl mx-auto px-4 pt-4 space-y-4">
 
-    <!-- Setup Gemini API Key -->
-    <section id="boxApiKey" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
-      <div id="apiKeyInputMode" class="space-y-2">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700">🔑 Tempel API Key (AQ....)</span>
-          <a href="https://aistudio.google.com/apikey" target="_blank" class="text-[11px] text-emerald-700 font-semibold underline">Google AI Studio →</a>
-        </div>
-        <div class="flex gap-2">
-          <input type="password" id="inputGeminiKey" placeholder="Tempel AQ. di sini"
-            class="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-600" />
-          <button id="btnSimpanKey" onclick="simpanDanTesKey()" class="bg-slate-900 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shrink-0">
-            Simpan & Tes
-          </button>
-        </div>
-        <p class="text-[10px] text-slate-500">Key AQ. tersimpan aman di browser HP.</p>
-      </div>
-
-      <div id="apiKeyReadyMode" class="hidden flex items-center justify-between text-xs">
-        <span class="font-semibold text-emerald-700">✅ AI Vision Aktif (Gemini 3.8 Flash)</span>
-        <button onclick="ubahGeminiKey()" class="text-slate-500 underline">Ganti API Key</button>
-      </div>
-    </section>
-
     <!-- Step 1: Pilih Jadwal -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">1. Target Kolom Spreadsheet</h2>
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">1. Pilih Jadwal Absensi</h2>
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Bulan</label>
@@ -62,118 +39,39 @@
           <select id="selectMinggu" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-emerald-600"></select>
         </div>
       </div>
-      <p class="text-xs text-slate-500 mt-2" id="infoPesertaAktif">Memuat data DB...</p>
-    </section>
-
-    <!-- Step 2: Foto Kertas Absen -->
-    <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
-      <div>
-        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Foto Kertas Absen (Nama • Kelas • TTD)</h2>
-        <p class="text-[11px] text-slate-500 mt-0.5">Bisa 1 foto langsung mencakup 3 kolom, atau tambah foto ke-2 jika kolom TTD terpisah.</p>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        <label class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-emerald-400 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 cursor-pointer transition text-center">
-          <span class="text-sm font-bold text-emerald-700" id="labelFoto1">📸 Foto Kertas Absen</span>
-          <span class="text-[11px] text-slate-500 mt-0.5">Nama, Kelas & Kolom TTD</span>
-          <input type="file" id="inputFoto1" accept="image/*" capture="environment" class="hidden" />
-        </label>
-
-        <label class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition text-center">
-          <span class="text-sm font-semibold text-slate-700" id="labelFoto2">+ Foto 2 (Opsional)</span>
-          <span class="text-[11px] text-slate-500 mt-0.5">Jika kolom TTD terpisah halaman</span>
-          <input type="file" id="inputFoto2" accept="image/*" capture="environment" class="hidden" />
-        </label>
-      </div>
-
-      <!-- Preview Foto Terpasang -->
-      <div id="previewContainer" class="hidden grid grid-cols-2 gap-2 pt-1">
-        <div id="wrapPrev1" class="hidden relative rounded-lg overflow-hidden border border-slate-300 bg-slate-900">
-          <img id="imgPrev1" class="w-full h-36 object-cover" alt="Foto 1" />
-          <button onclick="hapusFoto(1)" class="absolute top-1.5 right-1.5 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">Hapus</button>
-          <span class="absolute bottom-1 left-1.5 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">Foto 1</span>
-        </div>
-        <div id="wrapPrev2" class="hidden relative rounded-lg overflow-hidden border border-slate-300 bg-slate-900">
-          <img id="imgPrev2" class="w-full h-36 object-cover" alt="Foto 2" />
-          <button onclick="hapusFoto(2)" class="absolute top-1.5 right-1.5 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">Hapus</button>
-          <span class="absolute bottom-1 left-1.5 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">Foto 2</span>
-        </div>
-      </div>
-
-      <!-- Tombol Proses AI -->
-      <button id="btnProsesAI" onclick="prosesDenganAI()" disabled
-        class="w-full bg-slate-900 disabled:bg-slate-300 hover:bg-slate-800 text-white font-bold text-sm py-3 rounded-xl shadow transition flex items-center justify-center gap-2">
-        <span>✨ Cocokkan & Scan TTD dengan AI</span>
-      </button>
-
-      <!-- Loading State AI -->
-      <div id="loadingAI" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-center space-y-1">
-        <p class="text-xs font-bold text-emerald-800 animate-pulse">AI sedang membaca tulisan tangan, mencocokkan nama ke DB & mengecek TTD...</p>
-        <p class="text-[11px] text-emerald-600">Biasanya memakan waktu 3–6 detik</p>
-      </div>
-
-      <!-- Kotak Error Permanen -->
-      <div id="boxErrorAI" class="hidden bg-red-50 border border-red-300 rounded-xl p-3 text-xs text-red-800 space-y-1">
-        <p class="font-bold">⚠️ Detail Error AI:</p>
-        <p id="textErrorAI" class="font-mono text-[11px] break-words"></p>
+      <div class="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-xs">
+        <span class="text-slate-500" id="infoPesertaAktif">Memuat peserta...</span>
+        <button onclick="setSemuaStatus('H')" class="text-emerald-700 font-semibold hover:underline">Semua Hadir (H)</button>
       </div>
     </section>
 
-    <!-- Step 3: Koreksi Kilat & Konfirmasi Sebelum Kirim -->
-    <section id="sectionHasil" class="hidden space-y-4">
-
-      <!-- Ringkasan Angka -->
-      <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 grid grid-cols-5 gap-1.5 text-center">
-        <div class="bg-emerald-50 border border-emerald-200 rounded-lg py-2">
-          <div class="text-base font-extrabold text-emerald-700" id="statH">0</div>
-          <div class="text-[10px] font-bold text-emerald-800">Hadir</div>
-        </div>
-        <div class="bg-amber-50 border border-amber-300 rounded-lg py-2">
-          <div class="text-base font-extrabold text-amber-700" id="statKosong">0</div>
-          <div class="text-[10px] font-bold text-amber-800">Kosong</div>
-        </div>
-        <div class="bg-red-50 border border-red-200 rounded-lg py-2">
-          <div class="text-base font-extrabold text-red-700" id="statA">0</div>
-          <div class="text-[10px] font-bold text-red-800">Alpha</div>
-        </div>
-        <div class="bg-cyan-50 border border-cyan-200 rounded-lg py-2">
-          <div class="text-base font-extrabold text-cyan-700" id="statS">0</div>
-          <div class="text-[10px] font-bold text-cyan-800">Sakit</div>
-        </div>
-        <div class="bg-purple-50 border border-purple-200 rounded-lg py-2">
-          <div class="text-base font-extrabold text-purple-700" id="statI">0</div>
-          <div class="text-[10px] font-bold text-purple-800">Izin</div>
-        </div>
+    <!-- Step 2: List Peserta & Input Anggota Baru -->
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Daftar Absensi Peserta</h2>
+        <span class="text-xs font-bold text-slate-600" id="totalPesertaLabel">0 peserta</span>
       </div>
 
-      <!-- Blok 3A: Koreksi Kilat -->
-      <div class="bg-white p-4 rounded-xl shadow-sm border-2 border-amber-300 space-y-3">
-        <div class="flex items-center justify-between gap-2">
-          <div>
-            <h2 class="text-xs font-bold uppercase tracking-wider text-amber-800">3A. Cek Kilat: Tanpa TTD / Tidak Hadir</h2>
-            <p class="text-[11px] text-slate-500">AI mengosongkan baris tanpa TTD. Pilih A / S / I / H:</p>
-          </div>
-          <button onclick="setSemuaKosongKeAlpha()" class="shrink-0 text-[11px] bg-red-100 hover:bg-red-200 text-red-800 font-bold px-2.5 py-1.5 rounded-lg">
-            Sisa → Alpha
+      <!-- Form Tambah Nama Baru -->
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+        <span class="text-xs font-bold text-slate-700 block">+ Tambah Anggota Baru</span>
+        <div class="flex gap-2">
+          <input type="text" id="inputNamaBaru" placeholder="Nama Lengkap" class="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-emerald-600" />
+          <select id="inputKelasBaru" class="w-24 border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-emerald-600">
+            <option value="X-A">X-A</option>
+            <option value="X-B">X-B</option>
+            <option value="XI-A">XI-A</option>
+            <option value="XI-B">XI-B</option>
+            <option value="XII">XII</option>
+          </select>
+          <button onclick="tambahPesertaBaru()" class="bg-slate-900 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shrink-0">
+            Tambah
           </button>
         </div>
-
-        <div id="listTanpaTTD" class="divide-y divide-slate-100"></div>
       </div>
 
-      <!-- Blok 3B: Semua Hasil -->
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">3B. Semua Baris Hasil Pencocokan AI</h2>
-            <p class="text-[11px] text-slate-500">Urutan kertas otomatis dipasangkan ke baris Spreadsheet</p>
-          </div>
-          <span class="text-xs font-bold text-slate-600" id="totalBarisLabel">0 baris</span>
-        </div>
-
-        <div id="listSemuaHasil" class="divide-y divide-slate-100"></div>
-      </div>
-
+      <!-- List Data Peserta -->
+      <div id="listAbsensi" class="divide-y divide-slate-100"></div>
     </section>
 
   </main>
@@ -183,10 +81,10 @@
     <div class="max-w-2xl mx-auto flex items-center justify-between gap-3">
       <div class="text-xs text-slate-600 leading-tight">
         Target: <strong id="labelTargetKirim" class="text-slate-900">-</strong>
-        <div class="text-[11px] font-semibold" id="labelStatusBawah">Upload foto lalu klik Scan AI</div>
+        <div class="text-[11px] font-semibold text-emerald-700" id="labelStatusBawah">Pilih status lalu kirim</div>
       </div>
-      <button id="btnKirim" onclick="kirimKeSpreadsheet()" disabled
-        class="bg-emerald-600 disabled:bg-slate-300 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow transition shrink-0">
+      <button id="btnKirim" onclick="kirimKeSpreadsheet()"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow transition shrink-0">
         Kirim ke Sheets →
       </button>
     </div>
@@ -198,25 +96,16 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbxHFjrh4q4VSUwA0s03OyRFfel8s78e0hP4YbzY-AQSCLiU_tcMepdrxhysEj6R4-ZWnw/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
-    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v10';
-    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_aq_key_v10';
+    const CACHE_DB_KEY = 'pramuka58_db_manual_v1';
 
     let rawJadwal = [];
     let rawPeserta = [];
-    let dbAktif = [];
-
-    let foto1Base64 = null;
-    let foto2Base64 = null;
-    let hasilAI = [];
+    let absensiData = []; // Menyimpan status [{ rowIndex, nama, kelas, status, isNew }]
 
     window.addEventListener('DOMContentLoaded', () => {
-      cekStatusApiKey();
       muatDataAwal(false);
-
-      document.getElementById('inputFoto1').addEventListener('change', e => handlePilihFoto(e, 1));
-      document.getElementById('inputFoto2').addEventListener('change', e => handlePilihFoto(e, 2));
       document.getElementById('selectBulan').addEventListener('change', updateDropdownMinggu);
-      document.getElementById('selectMinggu').addEventListener('change', filterPesertaAktif);
+      document.getElementById('selectMinggu').addEventListener('change', buildListAbsensi);
     });
 
     function showToast(msg, duration = 3500) {
@@ -227,90 +116,10 @@
       el._timer = setTimeout(() => el.classList.add('hidden'), duration);
     }
 
-    function getActiveGeminiKey() {
-      const saved = localStorage.getItem(GEMINI_KEY_STORAGE);
-      return (saved && saved.trim().startsWith('AQ.')) ? saved.trim() : '';
-    }
-
-    function cekStatusApiKey() {
-      const key = getActiveGeminiKey();
-      if (key) {
-        document.getElementById('apiKeyInputMode').classList.add('hidden');
-        document.getElementById('apiKeyReadyMode').classList.remove('hidden');
-      } else {
-        document.getElementById('apiKeyInputMode').classList.remove('hidden');
-        document.getElementById('apiKeyReadyMode').classList.add('hidden');
-      }
-      updateTombolProses();
-    }
-
-    async function callVertexEndpoint(apiKey, payloadBody) {
-      // Diperbarui ke gemini-3.8-flash sesuai instruksi terbaru Google AI
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent`;
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        body: JSON.stringify(payloadBody)
-      });
-      const data = await response.json();
-      if (response.ok) return data;
-      throw new Error(data.error?.message || `HTTP ${response.status}`);
-    }
-
-    async function simpanDanTesKey() {
-      const val = document.getElementById('inputGeminiKey').value.trim();
-      if (!val.startsWith('AQ.')) {
-        showToast('Key harus diawali AQ.');
-        return;
-      }
-
-      const btn = document.getElementById('btnSimpanKey');
-      btn.disabled = true;
-      btn.textContent = 'Mengetes...';
-      document.getElementById('boxErrorAI').classList.add('hidden');
-
-      try {
-        await callVertexEndpoint(val, {
-          contents: [{ role: 'user', parts: [{ text: 'OK' }] }]
-        });
-        localStorage.setItem(GEMINI_KEY_STORAGE, val);
-        cekStatusApiKey();
-        showToast('✅ API Key AQ. valid & tersimpan!');
-      } catch (err) {
-        document.getElementById('textErrorAI').textContent = err.message;
-        document.getElementById('boxErrorAI').classList.remove('hidden');
-        showToast('Gagal memvalidasi key AQ.', 4000);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Simpan & Tes';
-      }
-    }
-
-    function ubahGeminiKey() {
-      document.getElementById('inputGeminiKey').value = getActiveGeminiKey();
-      document.getElementById('apiKeyInputMode').classList.remove('hidden');
-      document.getElementById('apiKeyReadyMode').classList.add('hidden');
-    }
-
-    // ==========================================
-    // SINKRONISASI DB & FOTO
-    // ==========================================
-    function terapkanDataKeUI(data, sumberLabel) {
-      rawJadwal = data.jadwal || [];
-      rawPeserta = data.peserta || [];
-      isiDropdownBulan();
-      document.getElementById('statusKoneksi').textContent = `Terhubung: ${data.sheetName} (${sumberLabel})`;
-    }
-
     async function muatDataAwal(forceRefresh = false) {
       const statusEl = document.getElementById('statusKoneksi');
-      const startTime = performance.now();
-
       const cachedRaw = localStorage.getItem(CACHE_DB_KEY);
+
       if (cachedRaw && !forceRefresh) {
         try { terapkanDataKeUI(JSON.parse(cachedRaw), 'Cache'); } catch (e) {}
       } else {
@@ -323,13 +132,19 @@
         if (data.status !== 'success') throw new Error(data.message || 'Gagal memuat DB.');
 
         localStorage.setItem(CACHE_DB_KEY, JSON.stringify(data));
-        const durasi = ((performance.now() - startTime) / 1000).toFixed(1);
-        terapkanDataKeUI(data, `Sync ${durasi}d`);
-        if (forceRefresh) showToast(`DB diperbarui (${durasi} detik)`);
+        terapkanDataKeUI(data, 'Live Sync');
+        if (forceRefresh) showToast('DB berhasil diperbarui!');
       } catch (err) {
         if (!cachedRaw) statusEl.textContent = 'Gagal terhubung ke Spreadsheet';
         showToast('Error DB: ' + err.message, 5000);
       }
+    }
+
+    function terapkanDataKeUI(data, sumberLabel) {
+      rawJadwal = data.jadwal || [];
+      rawPeserta = data.peserta || [];
+      isiDropdownBulan();
+      document.getElementById('statusKoneksi').textContent = `Terhubung: ${data.sheetName} (${sumberLabel})`;
     }
 
     function isiDropdownBulan() {
@@ -354,10 +169,10 @@
         .join('');
 
       if (prev && mingguList.some(m => String(m.minggu) === prev)) selectMinggu.value = prev;
-      filterPesertaAktif();
+      buildListAbsensi();
     }
 
-    function filterPesertaAktif() {
+    function buildListAbsensi() {
       const bulan = document.getElementById('selectBulan').value;
       const selectMinggu = document.getElementById('selectMinggu');
       const minggu = Number(selectMinggu.value);
@@ -365,304 +180,122 @@
       const colIndex = opt ? Number(opt.dataset.col) : null;
 
       document.getElementById('labelTargetKirim').textContent = `${bulan} - M${minggu}`;
-      dbAktif = rawPeserta.filter(p => !p.purnaCols.includes(colIndex));
-      document.getElementById('infoPesertaAktif').textContent =
-        `DB aktif: ${dbAktif.length} peserta (Peserta ~PURNA~ dilewati).`;
-      updateTombolProses();
+
+      // Ambil peserta aktif (bukan purna untuk kolom ini)
+      const dbAktif = rawPeserta.filter(p => !p.purnaCols.includes(colIndex));
+      
+      document.getElementById('infoPesertaAktif').textContent = `Total peserta aktif: ${dbAktif.length}`;
+
+      // Mapping ke state lokal (pertahankan status jika sudah diubah sebelumnya)
+      const existingMap = new Map(absensiData.map(item => [item.rowIndex || item.nama, item.status]));
+
+      absensiData = dbAktif.map(p => ({
+        rowIndex: p.rowIndex,
+        nama: p.nama,
+        kelas: p.kelas,
+        status: existingMap.get(p.rowIndex) || 'H', // Default Hadir
+        isNew: false
+      }));
+
+      // Masukkan juga peserta baru yang ditambahkan manual di sesi ini
+      const pesertaBaruSesiIni = absensiData.filter(item => item.isNew);
+      absensiData = [...absensiData.filter(item => !item.isNew), ...pesertaBaruSesiIni];
+
+      renderList();
     }
 
-    function compressImageToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = ev => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const maxDim = 1600;
-            let w = img.width;
-            let h = img.height;
-            if (w > maxDim || h > maxDim) {
-              if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
-              else { w = Math.round((w * maxDim) / h); h = maxDim; }
-            }
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-            resolve({ dataUrl, base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
-          };
-          img.onerror = reject;
-          img.src = ev.target.result;
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
+    function renderList() {
+      const container = document.getElementById('listAbsensi');
+      document.getElementById('totalPesertaLabel').textContent = `${absensiData.length} peserta`;
 
-    async function handlePilihFoto(e, slot) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      try {
-        const compressed = await compressImageToBase64(file);
-        document.getElementById('previewContainer').classList.remove('hidden');
-        document.getElementById('boxErrorAI').classList.add('hidden');
-
-        if (slot === 1) {
-          foto1Base64 = compressed;
-          document.getElementById('imgPrev1').src = compressed.dataUrl;
-          document.getElementById('wrapPrev1').classList.remove('hidden');
-          document.getElementById('labelFoto1').textContent = '✅ Foto 1 Terpasang';
-        } else {
-          foto2Base64 = compressed;
-          document.getElementById('imgPrev2').src = compressed.dataUrl;
-          document.getElementById('wrapPrev2').classList.remove('hidden');
-          document.getElementById('labelFoto2').textContent = '✅ Foto 2 Terpasang';
-        }
-        updateTombolProses();
-      } catch (err) {
-        showToast('Gagal memuat foto: ' + err.message);
-      }
-      e.target.value = '';
-    }
-
-    function hapusFoto(slot) {
-      if (slot === 1) {
-        foto1Base64 = null;
-        document.getElementById('wrapPrev1').classList.add('hidden');
-        document.getElementById('labelFoto1').textContent = '📸 Foto Kertas Absen';
-      } else {
-        foto2Base64 = null;
-        document.getElementById('wrapPrev2').classList.add('hidden');
-        document.getElementById('labelFoto2').textContent = '+ Foto 2 (Opsional)';
-      }
-      if (!foto1Base64 && !foto2Base64) {
-        document.getElementById('previewContainer').classList.add('hidden');
-      }
-      updateTombolProses();
-    }
-
-    function updateTombolProses() {
-      const hasKey = Boolean(getActiveGeminiKey());
-      const hasFoto = Boolean(foto1Base64 || foto2Base64);
-      const hasDB = dbAktif.length > 0;
-      document.getElementById('btnProsesAI').disabled = !(hasKey && hasFoto && hasDB);
-    }
-
-    async function prosesDenganAI() {
-      const apiKey = getActiveGeminiKey();
-      if (!apiKey) {
-        showToast('Masukkan API Key AQ. terlebih dahulu!');
+      if (absensiData.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada data peserta.</p>`;
         return;
       }
 
-      const bulan = document.getElementById('selectBulan').value;
-      const minggu = document.getElementById('selectMinggu').value;
+      container.innerHTML = absensiData.map((item, idx) => {
+        const st = item.status;
+        const btnClass = (kode, activeColor) =>
+          st === kode ? `${activeColor} text-white font-bold shadow-xs` : `bg-slate-100 text-slate-600 hover:bg-slate-200`;
 
-      const btn = document.getElementById('btnProsesAI');
-      const loading = document.getElementById('loadingAI');
-      const boxError = document.getElementById('boxErrorAI');
-      btn.disabled = true;
-      loading.classList.remove('hidden');
-      boxError.classList.add('hidden');
+        const badgeBaru = item.isNew ? `<span class="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold ml-1">Baru</span>` : '';
 
-      try {
-        const rosterRingkas = dbAktif.map(p => ({
-          dbRowIndex: p.rowIndex,
-          namaDB: p.nama,
-          kelasDB: p.kelas
-        }));
-
-        const promptText = `Kamu adalah asisten pencatat absensi Pramuka 58.
-Tugasmu membaca foto buku absensi tulis tangan yang memiliki 3 bagian utama: kolom NAMA, kolom KELAS, dan kolom TTD (tanda tangan) untuk target "${bulan} Minggu ke-${minggu}".
-
-Berikut adalah daftar resmi database (DB) peserta aktif di Google Sheets:
-${JSON.stringify(rosterRingkas)}
-
-Instruksi wajib:
-1. Baca setiap baris peserta di kertas absen secara berurutan dari atas ke bawah (1 sampai baris terakhir yang terisi).
-2. Cocokkan setiap nama & kelas di kertas dengan "namaDB" yang paling sesuai di daftar DB (perhatikan singkatan nama seperti "S.M" untuk "Satrio Manullang" atau perbedaan ejaan kecil tulisan tangan).
-3. Jika nama di kertas benar-benar orang baru yang tidak ada di daftar DB, isi "dbRowIndex": 0, "namaDB": "", dan "isNew": true.
-4. Periksa kolom TTD pada kolom minggu yang aktif (biasanya kolom paling kanan yang terisi coretan/huruf di bawah angka minggu ${minggu}):
-   - Jika ada coretan tanda tangan / paraf -> isi "adaTTD": true, "catatanKolom": "Ada TTD".
-   - Jika TIDAK ada tanda tangan (misalnya sel kosong, atau tertulis huruf seperti "I", "A", "S") -> isi "adaTTD": false, dan tuliskan apa yang terlihat di sel itu pada "catatanKolom" (contoh: "Kosong", "Tertulis: I", "Tertulis: A").
-
-Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
-
-        const parts = [{ text: promptText }];
-        if (foto1Base64) parts.push({ inlineData: { mimeType: foto1Base64.mimeType, data: foto1Base64.base64 } });
-        if (foto2Base64) parts.push({ inlineData: { mimeType: foto2Base64.mimeType, data: foto2Base64.base64 } });
-
-        const payloadBody = {
-          contents: [{ role: 'user', parts }],
-          generationConfig: {
-            temperature: 0.1,
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: 'ARRAY',
-              items: {
-                type: 'OBJECT',
-                properties: {
-                  paperNo: { type: 'INTEGER' },
-                  paperName: { type: 'STRING' },
-                  paperClass: { type: 'STRING' },
-                  dbRowIndex: { type: 'INTEGER' },
-                  namaDB: { type: 'STRING' },
-                  isNew: { type: 'BOOLEAN' },
-                  adaTTD: { type: 'BOOLEAN' },
-                  catatanKolom: { type: 'STRING' }
-                },
-                required: ['paperNo', 'paperName', 'paperClass', 'dbRowIndex', 'namaDB', 'isNew', 'adaTTD', 'catatanKolom']
-              }
-            }
-          }
-        };
-
-        const data = await callVertexEndpoint(apiKey, payloadBody);
-
-        let rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
-        rawJsonText = rawJsonText.replace(/```json/gi, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(rawJsonText);
-
-        if (!Array.isArray(parsed) || parsed.length === 0) {
-          throw new Error('AI tidak menemukan baris absensi pada foto.');
-        }
-
-        hasilAI = parsed.map((item, idx) => {
-          const validDbRow = item.dbRowIndex && item.dbRowIndex > 0 && dbAktif.some(d => d.rowIndex === item.dbRowIndex)
-            ? item.dbRowIndex
-            : null;
-          const dbObj = validDbRow ? dbAktif.find(d => d.rowIndex === validDbRow) : null;
-
-          return {
-            paperNo: item.paperNo || idx + 1,
-            paperName: item.paperName || '',
-            paperClass: (item.paperClass || 'X-A').toUpperCase(),
-            dbRowIndex: dbObj ? dbObj.rowIndex : null,
-            dbName: dbObj ? dbObj.nama : null,
-            isNew: !dbObj,
-            addToDb: !dbObj,
-            hasTTD: Boolean(item.adaTTD),
-            aiNote: item.catatanKolom || (item.adaTTD ? 'Ada TTD' : 'Kosong'),
-            status: item.adaTTD ? 'H' : ''
-          };
-        });
-
-        document.getElementById('sectionHasil').classList.remove('hidden');
-        renderHasilKoreksi();
-        document.getElementById('sectionHasil').scrollIntoView({ behavior: 'smooth' });
-        showToast(`AI selesai! Terbaca ${hasilAI.length} baris kertas.`);
-      } catch (err) {
-        document.getElementById('textErrorAI').textContent = err.message;
-        boxError.classList.remove('hidden');
-        showToast('AI Error: ' + err.message, 5000);
-      } finally {
-        loading.classList.add('hidden');
-        updateTombolProses();
-      }
-    }
-
-    // ==========================================
-    // KOREKSI KILAT & KIRIM
-    // ==========================================
-    function renderHasilKoreksi() {
-      let cH = 0, cKosong = 0, cA = 0, cS = 0, cI = 0;
-      hasilAI.forEach(r => {
-        if (r.status === 'H') cH++;
-        else if (r.status === 'A') cA++;
-        else if (r.status === 'S') cS++;
-        else if (r.status === 'I') cI++;
-        else cKosong++;
-      });
-
-      document.getElementById('statH').textContent = cH;
-      document.getElementById('statKosong').textContent = cKosong;
-      document.getElementById('statA').textContent = cA;
-      document.getElementById('statS').textContent = cS;
-      document.getElementById('statI').textContent = cI;
-      document.getElementById('totalBarisLabel').textContent = `${hasilAI.length} baris`;
-
-      const btnKirim = document.getElementById('btnKirim');
-      const labelBawah = document.getElementById('labelStatusBawah');
-
-      if (cKosong > 0) {
-        btnKirim.disabled = true;
-        labelBawah.innerHTML = `<span class="text-amber-700">⚠️ ${cKosong} baris tanpa TTD belum diisi (A/S/I)</span>`;
-      } else {
-        btnKirim.disabled = hasilAI.length === 0;
-        labelBawah.innerHTML = `<span class="text-emerald-700">✅ Siap kirim: H:${cH} • A:${cA} • S:${cS} • I:${cI}</span>`;
-      }
-
-      const tanpaTTDList = hasilAI.map((row, idx) => ({ row, idx })).filter(item => !item.row.hasTTD || item.row.status !== 'H');
-      const boxTanpaTTD = document.getElementById('listTanpaTTD');
-      if (tanpaTTDList.length === 0) {
-        boxTanpaTTD.innerHTML = `<p class="text-xs text-emerald-700 font-semibold py-3 text-center">Semua peserta bertanda tangan (100% Hadir)!</p>`;
-      } else {
-        boxTanpaTTD.innerHTML = tanpaTTDList.map(({ row, idx }) => renderBarisItem(row, idx, true)).join('');
-      }
-
-      document.getElementById('listSemuaHasil').innerHTML = hasilAI.map((row, idx) => renderBarisItem(row, idx, false)).join('');
-    }
-
-    function renderBarisItem(row, idx, highlightKosong) {
-      const st = row.status;
-      const isUnset = st === '';
-      const btnClass = (kode, activeColor) => st === kode ? `${activeColor} text-white font-bold shadow-xs` : `bg-slate-100 text-slate-600 hover:bg-slate-200`;
-      const dbInfo = row.dbRowIndex ? `<span class="text-emerald-700">→ DB: ${row.dbName}</span>` : `<span class="text-amber-700 font-bold">→ Anggota Baru (+Row DB)</span>`;
-      const aiBadge = row.hasTTD ? `<span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-semibold">${row.aiNote}</span>` : `<span class="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-bold">${row.aiNote}</span>`;
-
-      return `
-        <div class="py-2.5 flex items-center justify-between gap-2 ${highlightKosong && isUnset ? 'bg-amber-50/60 -mx-2 px-2 rounded-lg' : ''}">
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5">
-              <p class="text-xs sm:text-sm font-bold text-slate-800 truncate">
-                <span class="text-slate-400 font-mono mr-1">${row.paperNo}.</span>${row.paperName}
-              </p>
-              <span class="text-[10px] text-slate-500 font-semibold shrink-0">(${row.paperClass})</span>
+        return `
+          <div class="py-2.5 flex items-center justify-between gap-2">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5">
+                <p class="text-xs sm:text-sm font-bold text-slate-800 truncate">
+                  <span class="text-slate-400 font-mono mr-1">${idx + 1}.</span>${item.nama}
+                </p>
+                ${badgeBaru}
+              </div>
+              <p class="text-[11px] text-slate-500">${item.kelas}</p>
             </div>
-            <div class="flex flex-wrap items-center gap-1.5 mt-0.5 text-[11px]">
-              ${aiBadge}
-              <span class="truncate">${dbInfo}</span>
+
+            <div class="flex gap-1 shrink-0">
+              <button onclick="ubahStatus(${idx}, 'H')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('H', 'bg-emerald-600')}">H</button>
+              <button onclick="ubahStatus(${idx}, 'S')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('S', 'bg-cyan-600')}">S</button>
+              <button onclick="ubahStatus(${idx}, 'I')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('I', 'bg-purple-600')}">I</button>
+              <button onclick="ubahStatus(${idx}, 'A')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('A', 'bg-red-600')}">A</button>
             </div>
           </div>
-          <div class="flex gap-1 shrink-0">
-            <button onclick="ubahStatus(${idx}, 'H')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('H', 'bg-emerald-600')}">H</button>
-            <button onclick="ubahStatus(${idx}, 'A')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('A', 'bg-red-600')}">A</button>
-            <button onclick="ubahStatus(${idx}, 'S')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('S', 'bg-cyan-600')}">S</button>
-            <button onclick="ubahStatus(${idx}, 'I')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('I', 'bg-purple-600')}">I</button>
-          </div>
-        </div>
-      `;
+        `;
+      }).join('');
     }
 
     function ubahStatus(idx, kode) {
-      hasilAI[idx].status = kode;
-      renderHasilKoreksi();
+      absensiData[idx].status = kode;
+      renderList();
     }
 
-    function setSemuaKosongKeAlpha() {
-      let diubah = 0;
-      hasilAI.forEach(r => { if (r.status === '') { r.status = 'A'; diubah++; } });
-      renderHasilKoreksi();
-      if (diubah > 0) showToast(`${diubah} baris kosong diisi Alpha (A).`);
+    function setSemuaStatus(kode) {
+      absensiData.forEach(item => item.status = kode);
+      renderList();
+      showToast(`Semua status diubah menjadi ${kode}`);
+    }
+
+    function tambahPesertaBaru() {
+      const namaInput = document.getElementById('inputNamaBaru');
+      const kelasInput = document.getElementById('inputKelasBaru');
+      const nama = namaInput.value.trim();
+      const kelas = kelasInput.value;
+
+      if (!nama) {
+        showToast('Masukkan nama peserta terlebih dahulu!');
+        return;
+      }
+
+      absensiData.push({
+        rowIndex: null,
+        nama: nama,
+        kelas: kelas,
+        status: 'H',
+        isNew: true
+      });
+
+      namaInput.value = '';
+      renderList();
+      showToast(`Berhasil menambahkan ${nama} ke daftar.`);
     }
 
     async function kirimKeSpreadsheet() {
       const bulan = document.getElementById('selectBulan').value;
       const minggu = Number(document.getElementById('selectMinggu').value);
 
-      if (hasilAI.some(r => r.status === '')) {
-        showToast('Masih ada baris kosong! Pilih A / S / I / H dulu.');
-        return;
-      }
+      const absensiExisting = absensiData
+        .filter(r => !r.isNew && r.rowIndex !== null)
+        .map(r => ({ rowIndex: r.rowIndex, nama: r.nama, status: r.status }));
+
+      const pesertaBaru = absensiData
+        .filter(r => r.isNew && r.nama.trim() !== '')
+        .map(r => ({ nama: r.nama.trim(), kelas: r.kelas, status: r.status }));
 
       const payload = {
         token: API_TOKEN,
-        bulan,
-        minggu,
-        absensi: hasilAI.filter(r => !r.isNew && r.dbRowIndex !== null).map(r => ({ rowIndex: r.dbRowIndex, nama: r.dbName, status: r.status })),
-        pesertaBaru: hasilAI.filter(r => r.isNew && r.addToDb && r.paperName.trim() !== '').map(r => ({ nama: r.paperName.trim(), kelas: r.paperClass || 'X-A', status: r.status }))
+        bulan: bulan,
+        minggu: minggu,
+        absensi: absensiExisting,
+        pesertaBaru: pesertaBaru
       };
 
       const btn = document.getElementById('btnKirim');
@@ -675,12 +308,13 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload)
         });
+
         const result = await response.json();
         if (result.status === 'success') {
           showToast(result.message, 5000);
           if (result.added > 0) await muatDataAwal(true);
         } else {
-          throw new Error(result.message || 'Gagal menyimpan.');
+          throw new Error(result.message || 'Gagal menyimpan data.');
         }
       } catch (err) {
         showToast('Gagal kirim: ' + err.message, 5000);
