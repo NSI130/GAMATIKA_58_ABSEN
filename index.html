@@ -25,10 +25,10 @@
         </div>
         <div>
           <h1 class="font-extrabold text-sm sm:text-base tracking-tight text-[#2c3e35]">Pramuka Ambalan 58</h1>
-          <p class="text-[11px] text-[#556b5f] font-medium" id="statusKoneksi">Menghubungkan ke Database...</p>
+          <p class="text-[11px] text-[#556b5f] font-medium" id="statusKoneksi" aria-live="polite">Menghubungkan ke Database...</p>
         </div>
       </div>
-      <button id="btnRefresh" class="text-xs bg-[#2c3e35] hover:bg-[#1a2620] text-white px-3.5 py-2 rounded-xl font-semibold shadow-sm transition active:scale-95">
+      <button type="button" id="btnRefresh" aria-label="Refresh database" class="text-xs bg-[#2c3e35] hover:bg-[#1a2620] text-white px-3.5 py-2 rounded-xl font-semibold shadow-sm transition active:scale-95">
         ↻ Refresh DB
       </button>
     </div>
@@ -58,17 +58,17 @@
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-bold text-[#4a5f53] mb-1.5">Bulan</label>
+          <label for="selectBulan" class="block text-xs font-bold text-[#4a5f53] mb-1.5">Bulan</label>
           <select id="selectBulan" class="w-full border border-[#d8e4dc] rounded-2xl px-4 py-2.5 text-sm bg-[#f9fbf9] text-[#2c3e35] font-semibold focus:outline-none focus:border-[#2c3e35] transition"></select>
         </div>
         <div>
-          <label class="block text-xs font-bold text-[#4a5f53] mb-1.5">Minggu ke-</label>
+          <label for="selectMinggu" class="block text-xs font-bold text-[#4a5f53] mb-1.5">Minggu ke-</label>
           <select id="selectMinggu" class="w-full border border-[#d8e4dc] rounded-2xl px-4 py-2.5 text-sm bg-[#f9fbf9] text-[#2c3e35] font-semibold focus:outline-none focus:border-[#2c3e35] transition"></select>
         </div>
       </div>
       <div class="flex items-center justify-between pt-3 border-t border-[#f0f4f1] text-xs">
         <span class="text-[#556b5f] font-medium" id="infoPesertaAktif">Memuat peserta...</span>
-        <button id="btnSetHadir" class="text-[#2c3e35] font-bold hover:underline bg-[#eaf1ec] px-3 py-1.5 rounded-xl transition">
+        <button type="button" id="btnSetHadir" class="text-[#2c3e35] font-bold hover:underline bg-[#eaf1ec] px-3 py-1.5 rounded-xl transition">
           ✓ Set Semua Hadir (H)
         </button>
       </div>
@@ -85,26 +85,33 @@
       <div class="bg-[#f9fbf9] p-4 rounded-2xl border border-[#d8e4dc] space-y-2.5">
         <span class="text-xs font-extrabold text-[#2c3e35] block">+ Tambah Anggota Baru</span>
         <div class="flex gap-2">
-          <input type="text" id="inputNamaBaru" placeholder="Nama Lengkap Anggota" class="flex-1 border border-[#d8e4dc] rounded-xl px-3.5 py-2 text-xs bg-white text-[#2c3e35] font-medium focus:outline-none focus:border-[#2c3e35]" />
-          <select id="inputKelasBaru" class="w-24 border border-[#d8e4dc] rounded-xl px-2 py-2 text-xs bg-white text-[#2c3e35] font-semibold focus:outline-none focus:border-[#2c3e35]">
-            <option value="X-A">X-A</option>
-            <option value="X-B">X-B</option>
-            <option value="XI-A">XI-A</option>
-            <option value="XI-B">XI-B</option>
-            <option value="XII">XII</option>
+          <input type="text" id="inputNamaBaru" autocomplete="name" maxlength="100" placeholder="Nama Lengkap Anggota" class="flex-1 border border-[#d8e4dc] rounded-xl px-3.5 py-2 text-xs bg-white text-[#2c3e35] font-medium focus:outline-none focus:border-[#2c3e35]" />
+          <select id="inputKelasBaru" class="w-32 border border-[#d8e4dc] rounded-xl px-2 py-2 text-xs bg-white text-[#2c3e35] font-semibold focus:outline-none focus:border-[#2c3e35]">
+            <!-- Kelas X-A s.d X-I -->
+            <option value="X-A">X-A</option><option value="X-B">X-B</option><option value="X-C">X-C</option>
+            <option value="X-D">X-D</option><option value="X-E">X-E</option><option value="X-F">X-F</option>
+            <option value="X-G">X-G</option><option value="X-H">X-H</option><option value="X-I">X-I</option>
+            <!-- Kelas XI-A s.d XI-H -->
+            <option value="XI-A">XI-A</option><option value="XI-B">XI-B</option><option value="XI-C">XI-C</option>
+            <option value="XI-D">XI-D</option><option value="XI-E">XI-E</option><option value="XI-F">XI-F</option>
+            <option value="XI-G">XI-G</option><option value="XI-H">XI-H</option>
+            <!-- Kelas XII-A s.d XII-H -->
+            <option value="XII-A">XII-A</option><option value="XII-B">XII-B</option><option value="XII-C">XII-C</option>
+            <option value="XII-D">XII-D</option><option value="XII-E">XII-E</option><option value="XII-F">XII-F</option>
+            <option value="XII-G">XII-G</option><option value="XII-H">XII-H</option>
           </select>
-          <button id="btnTambahPeserta" class="bg-[#2c3e35] hover:bg-[#1a2620] text-white text-xs font-bold px-4 py-2 rounded-xl shrink-0 transition active:scale-95 shadow-xs">
+          <button type="button" id="btnTambahPeserta" class="bg-[#2c3e35] hover:bg-[#1a2620] text-white text-xs font-bold px-4 py-2 rounded-xl shrink-0 transition active:scale-95 shadow-xs">
             Tambah
           </button>
         </div>
         <!-- Peringatan Double Input -->
-        <div id="warningDouble" class="hidden text-[11px] text-amber-900 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+        <div id="warningDouble" role="status" aria-live="polite" class="hidden text-[11px] text-amber-900 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
           ⚠️ Peringatan: Nama ini sudah terdaftar di database!
         </div>
       </div>
 
       <!-- List Data Peserta -->
-      <div id="listAbsensi" class="divide-y divide-[#f0f4f1] mt-2"></div>
+      <div id="listAbsensi" aria-live="polite" class="divide-y divide-[#f0f4f1] mt-2"></div>
     </section>
 
   </main>
@@ -114,9 +121,9 @@
     <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
       <div class="text-xs text-[#556b5f] leading-tight pl-1">
         Target Simpan: <strong id="labelTargetKirim" class="text-[#2c3e35] font-bold">-</strong>
-        <div class="text-[11px] font-semibold text-emerald-700 mt-0.5" id="labelStatusBawah">Periksa status lalu kirim</div>
+        <div class="text-[11px] font-semibold text-emerald-700 mt-0.5" id="labelStatusBawah" aria-live="polite">Periksa status lalu kirim</div>
       </div>
-      <button id="btnKirim"
+      <button type="button" id="btnKirim"
         class="bg-[#2c3e35] hover:bg-[#1a2620] active:scale-95 text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl shadow-md transition shrink-0 flex items-center gap-2">
         <span>Kirim ke Sheets</span>
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
@@ -128,7 +135,7 @@
   <div id="toast" class="fixed top-20 inset-x-4 max-w-sm mx-auto bg-[#2c3e35] text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl hidden z-50 text-center border border-[#4a5f53]"></div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxHFjrh4q4VSUwA0s03OyRFfel8s78e0hP4YbzY-AQSCLiU_tcMepdrxhysEj6R4-ZWnw/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbywHsL_aU9z9RMe9rgdlFANB_5SfYaf22kJXkSR5DkBxloTSITPAGhajrQqbw3XgFgSKw/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
     const CACHE_DB_KEY = 'pramuka58_db_manual_v3';
     const CACHE_TTL = 5 * 60 * 1000;
@@ -139,6 +146,7 @@
     let rawJadwal = [];
     let rawPeserta = [];
     let absensiData = [];
+    let pesertaNamaSet = new Set();
     let isUserManualOverride = false;
     let isLoading = false;
     let isSubmitting = false;
@@ -217,12 +225,13 @@
     function terapkanDataKeUI(data, sumberLabel) {
       rawJadwal = Array.isArray(data.jadwal) ? data.jadwal : [];
       rawPeserta = Array.isArray(data.peserta) ? data.peserta : [];
+      pesertaNamaSet = new Set(rawPeserta.map(p => normalizeName(p.nama)).filter(Boolean));
       isiDropdownBulan();
       els.statusKoneksi.textContent = `Terhubung: ${data.sheetName || 'Database'} (${sumberLabel})`;
     }
 
     function isiDropdownBulan() {
-      const bulanUnik = [...new Set(rawJadwal.map(j => j.bulan).filter(Boolean))];
+      const bulanUnik = [...new Set(rawJadwal.map(j => String(j.bulan || '').trim()).filter(Boolean))];
       els.selectBulan.innerHTML = bulanUnik
         .map(b => `<option value="${escapeHTML(b)}">${escapeHTML(b)}</option>`)
         .join('');
@@ -242,7 +251,7 @@
         els.selectBulan.value = bulanIniNama;
       }
 
-      updateDropdownMinggu();
+      updateDropdownMinggu(false);
 
       const tanggalHariIni = now.getDate();
       const perkiraanMinggu = Math.min(Math.ceil(tanggalHariIni / 7), 4);
@@ -257,18 +266,18 @@
       buildListAbsensi();
     }
 
-    function updateDropdownMinggu() {
+    function updateDropdownMinggu(shouldRender = true) {
       const bulanTerpilih = els.selectBulan.value;
       const selectMinggu = els.selectMinggu;
       const prev = selectMinggu.value;
       const mingguList = rawJadwal.filter(j => j.bulan === bulanTerpilih);
 
       selectMinggu.innerHTML = mingguList
-        .map(m => `<option value="${m.minggu}" data-col="${m.colIndex}">Minggu ke-${m.minggu} (Kolom ${m.colLetter})</option>`)
+        .map(m => `<option value="${escapeHTML(m.minggu)}" data-col="${escapeHTML(m.colIndex)}">Minggu ke-${escapeHTML(m.minggu)} (Kolom ${escapeHTML(m.colLetter)})</option>`)
         .join('');
 
       if (prev && mingguList.some(m => String(m.minggu) === prev)) selectMinggu.value = prev;
-      buildListAbsensi();
+      if (shouldRender) buildListAbsensi();
     }
 
     function cekNamaDouble(val) {
@@ -277,7 +286,7 @@
         els.warningDouble.classList.add('hidden');
         return;
       }
-      const isExist = rawPeserta.some(p => normalizeName(p.nama) === query)
+      const isExist = pesertaNamaSet.has(query)
         || absensiData.some(p => normalizeName(p.nama) === query);
       els.warningDouble.classList.toggle('hidden', !isExist);
     }
@@ -295,13 +304,15 @@
       const dbAktif = rawPeserta.filter(p => !Array.isArray(p.purnaCols) || !p.purnaCols.includes(colIndex));
       els.infoPesertaAktif.textContent = `Total peserta aktif: ${dbAktif.length}`;
 
-      const existingMap = new Map(absensiData.map(item => [item.rowIndex ?? `new:${normalizeName(item.nama)}`, item.status]));
+      const existingMap = new Map(absensiData.map(item => [participantKey(item), item.status]));
 
       absensiData = dbAktif.map(p => ({
         rowIndex: p.rowIndex,
         nama: p.nama,
         kelas: p.kelas,
-        status: existingMap.get(p.rowIndex) || 'H',
+        status: STATUS_CODES.has(existingMap.get(participantKey(p)))
+          ? existingMap.get(participantKey(p))
+          : 'H',
         isNew: false
       }));
       absensiData.push(...pesertaBaruSesiIni);
@@ -379,7 +390,7 @@
       }
 
       const normalizedName = normalizeName(nama);
-      const isDouble = rawPeserta.some(p => normalizeName(p.nama) === normalizedName)
+      const isDouble = pesertaNamaSet.has(normalizedName)
         || absensiData.some(p => normalizeName(p.nama) === normalizedName);
       if (isDouble) {
         if (!confirm(`Nama "${nama}" sudah ada di daftar. Tetap ingin menambahkan?`)) return;
@@ -462,7 +473,10 @@
         if (!raw) return null;
         const parsed = JSON.parse(raw);
         const data = parsed.data || parsed;
-        if (!data || data.status !== 'success') return null;
+        if (!data || data.status !== 'success') {
+          localStorage.removeItem(CACHE_DB_KEY);
+          return null;
+        }
         const savedAt = Number(parsed.savedAt || 0);
         return { data, stale: savedAt > 0 && Date.now() - savedAt > CACHE_TTL };
       } catch {
@@ -494,6 +508,12 @@
 
     function normalizeName(value) {
       return String(value || '').trim().toLocaleLowerCase();
+    }
+
+    function participantKey(item) {
+      return item.rowIndex != null
+        ? `row:${item.rowIndex}`
+        : `new:${normalizeName(item.nama)}`;
     }
 
     function escapeHTML(value) {
