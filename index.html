@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Scanner Absensi Pramuka 58</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tesseract.js untuk membaca daftar nama & kelas dari foto kertas -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
     input[type="range"] { accent-color: #16a34a; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen pb-24">
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-28">
 
   <!-- Header -->
   <header class="bg-emerald-700 text-white shadow-md sticky top-0 z-30">
@@ -27,7 +29,7 @@
 
   <main class="max-w-2xl mx-auto px-4 pt-4 space-y-4">
 
-    <!-- Step 1: Pilih Jadwal (Bulan & Minggu) -->
+    <!-- Step 1: Pilih Jadwal -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
       <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">1. Target Kolom Spreadsheet</h2>
       <div class="grid grid-cols-2 gap-3">
@@ -40,22 +42,69 @@
           <select id="selectMinggu" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-emerald-600"></select>
         </div>
       </div>
-      <p class="text-xs text-slate-500 mt-2" id="infoPesertaAktif">Memuat data peserta...</p>
+      <p class="text-xs text-slate-500 mt-2" id="infoPesertaAktif">Memuat data DB...</p>
     </section>
 
-    <!-- Step 2: Ambil / Upload Foto Halaman Folio -->
+    <!-- Step 2: Foto Halaman Nama Kertas & Cek Orang Baru -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Foto Kolom TTD Buku Folio</h2>
-        <span class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium">Posisikan Tegak Lurus</span>
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Daftar Nama di Kertas (Cek Orang Baru)</h2>
+          <p class="text-[11px] text-slate-500 mt-0.5" id="statusRosterKertas">Belum ada foto nama kertas di-scan</p>
+        </div>
+        <button onclick="tambahBarisKertasManual()" class="shrink-0 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300">
+          + Baris Manual
+        </button>
       </div>
 
-      <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-emerald-400 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 cursor-pointer transition">
+      <label class="flex flex-col items-center justify-center w-full py-4 border-2 border-dashed border-sky-400 rounded-xl bg-sky-50/50 hover:bg-sky-50 cursor-pointer transition">
         <div class="text-center px-4">
-          <p class="text-sm font-semibold text-emerald-700">Ambil Foto / Pilih Gambar Absen</p>
+          <p class="text-sm font-semibold text-sky-700">Foto Halaman Nama & Kelas (Buku Folio)</p>
+          <p class="text-xs text-slate-500 mt-0.5">Otomatis mencocokkan urutan kertas ke DB & mendeteksi orang baru</p>
+        </div>
+        <input type="file" id="inputFotoNama" accept="image/*" capture="environment" class="hidden" />
+      </label>
+
+      <!-- Progress Bar OCR -->
+      <div id="ocrProgressBox" class="hidden bg-sky-50 border border-sky-200 rounded-lg p-3 text-xs text-sky-800 space-y-1.5">
+        <div class="flex justify-between font-semibold">
+          <span id="ocrStatusText">Membaca tulisan di kertas...</span>
+          <span id="ocrPctText">0%</span>
+        </div>
+        <div class="w-full bg-sky-200 rounded-full h-1.5">
+          <div id="ocrProgressBar" class="bg-sky-600 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Alert Jika Ada Orang Baru -->
+      <div id="alertOrangBaru" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-3 text-xs text-amber-900">
+        <p class="font-bold">⚠️ Terdeteksi Peserta Baru (Belum Ada di DB):</p>
+        <p class="mt-0.5 text-amber-800" id="detailOrangBaru"></p>
+      </div>
+
+      <!-- Tabel Pemetaan Urutan Kertas -> DB -->
+      <div id="wrapperTabelKertas" class="hidden space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-semibold text-slate-600">Urutan Baris Kertas (<span id="totalBarisKertas">0</span> baris)</span>
+          <button onclick="resetRosterKeDB()" class="text-slate-500 underline">Samakan dengan DB</button>
+        </div>
+        <div id="listMappingKertas" class="max-h-72 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-lg bg-slate-50/50 px-2.5"></div>
+      </div>
+    </section>
+
+    <!-- Step 3: Ambil / Upload Foto Kolom TTD -->
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">3. Foto Kolom TTD Buku Folio</h2>
+        <span class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium">Sesuai Urutan Kertas</span>
+      </div>
+
+      <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-emerald-400 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 cursor-pointer transition">
+        <div class="text-center px-4">
+          <p class="text-sm font-semibold text-emerald-700">Ambil Foto / Pilih Gambar Kolom TTD</p>
           <p class="text-xs text-slate-500 mt-0.5">Mendukung kamera langsung atau galeri HP</p>
         </div>
-        <input type="file" id="inputFoto" accept="image/*" capture="environment" class="hidden" />
+        <input type="file" id="inputFotoTTD" accept="image/*" capture="environment" class="hidden" />
       </label>
 
       <!-- Area Canvas Preview & Kalibrasi Grid -->
@@ -64,7 +113,6 @@
           <canvas id="canvasPreview" class="max-w-full h-auto block"></canvas>
         </div>
 
-        <!-- Kontrol Kalibrasi Kotak TTD -->
         <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2.5 text-xs">
           <div class="flex items-center justify-between">
             <span class="font-bold text-slate-700">Kalibrasi Posisi Kolom TTD</span>
@@ -104,10 +152,10 @@
       </div>
     </section>
 
-    <!-- Step 3: Daftar Hasil Scan & Koreksi Manual -->
+    <!-- Step 4: Daftar Hasil Scan & Koreksi Manual -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">3. Hasil & Koreksi Cepat</h2>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">4. Hasil Absen & Koreksi Cepat</h2>
         <div class="flex gap-1.5 text-[11px] font-bold">
           <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded" id="countH">H: 0</span>
           <span class="bg-red-100 text-red-800 px-2 py-0.5 rounded" id="countA">A: 0</span>
@@ -125,11 +173,12 @@
   <!-- Floating Bottom Action Bar -->
   <div class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 p-3 shadow-lg z-30">
     <div class="max-w-2xl mx-auto flex items-center justify-between gap-3">
-      <div class="text-xs text-slate-600">
+      <div class="text-xs text-slate-600 leading-tight">
         Target: <strong id="labelTargetKirim" class="text-slate-900">-</strong>
+        <div class="text-[11px] text-amber-700 font-semibold" id="labelInfoTambahRow"></div>
       </div>
       <button id="btnKirim" onclick="kirimKeSpreadsheet()" disabled
-        class="bg-emerald-600 disabled:bg-slate-300 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow transition">
+        class="bg-emerald-600 disabled:bg-slate-300 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow transition shrink-0">
         Simpan ke Spreadsheet
       </button>
     </div>
@@ -139,25 +188,36 @@
   <div id="toast" class="fixed top-16 inset-x-4 max-w-md mx-auto bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-xl hidden z-50 text-center"></div>
 
   <script>
-    // ==========================================
-    // KONFIGURASI API GOOGLE APPS SCRIPT
-    // ==========================================
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzStwY4isj73dgvM7y6EoVvhJf5DZKHkAns-9kn7med1PnulZT1ezw8hRBh9PpRh1xBdw/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxHFjrh4q4VSUwA0s03OyRFfel8s78e0hP4YbzY-AQSCLiU_tcMepdrxhysEj6R4-ZWnw/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
-    const CACHE_KEY = 'pramuka58_db_cache_v2';
+    const CACHE_DB_KEY = 'pramuka58_db_cache_v3';
+    const CACHE_KERTAS_KEY = 'pramuka58_roster_kertas_v1';
 
-    // State Aplikasi
     let rawJadwal = [];
     let rawPeserta = [];
-    let pesertaAktif = [];
-    let statusMap = {};      // { noPeserta: 'H' | 'A' | 'I' | 'S' }
-    let inkScoreMap = {};    // { noPeserta: 4.2 }
-    let loadedImage = null;
+    let dbAktif = [];
 
-    // Inisialisasi saat halaman dibuka
+    /**
+     * Struktur paperRows (urutan baris 1..N persis seperti di buku folio):
+     * {
+     *   paperNo: 1,
+     *   paperName: "El Victorious Dharma S.M",
+     *   paperClass: "X-F",
+     *   dbRowIndex: 5,         // null jika orang baru / tidak ada di DB
+     *   dbName: "El Victorious Dharma Satrio Manullang",
+     *   matchType: "exact" | "fuzzy" | "new",
+     *   addToDb: false,        // true jika user setuju tambah row baru ke DB
+     *   status: "A",           // 'H' | 'A' | 'I' | 'S'
+     *   inkScore: null
+     * }
+     */
+    let paperRows = [];
+    let loadedImageTTD = null;
+
     window.addEventListener('DOMContentLoaded', () => {
       muatDataAwal(false);
-      document.getElementById('inputFoto').addEventListener('change', handleUploadFoto);
+      document.getElementById('inputFotoNama').addEventListener('change', handleScanNamaKertas);
+      document.getElementById('inputFotoTTD').addEventListener('change', handleUploadFotoTTD);
       document.getElementById('selectBulan').addEventListener('change', updateDropdownMinggu);
       document.getElementById('selectMinggu').addEventListener('change', filterPesertaAktif);
     });
@@ -170,6 +230,22 @@
       el._timer = setTimeout(() => el.classList.add('hidden'), duration);
     }
 
+    function simpanRosterKertasKeCache() {
+      const toSave = paperRows.map(r => ({
+        paperNo: r.paperNo,
+        paperName: r.paperName,
+        paperClass: r.paperClass,
+        dbRowIndex: r.dbRowIndex,
+        dbName: r.dbName,
+        matchType: r.matchType,
+        addToDb: r.addToDb
+      }));
+      localStorage.setItem(CACHE_KERTAS_KEY, JSON.stringify(toSave));
+    }
+
+    // ==========================================
+    // 1. SINKRONISASI DB GOOGLE SHEETS
+    // ==========================================
     function terapkanDataKeUI(data, sumberLabel) {
       rawJadwal = data.jadwal || [];
       rawPeserta = data.peserta || [];
@@ -178,12 +254,11 @@
       document.getElementById('btnKirim').disabled = false;
     }
 
-    // 1. Tarik Data Struktur Kolom & Daftar Peserta (Instant Cache + Background Sync)
     async function muatDataAwal(forceRefresh = false) {
       const statusEl = document.getElementById('statusKoneksi');
       const startTime = performance.now();
 
-      const cachedRaw = localStorage.getItem(CACHE_KEY);
+      const cachedRaw = localStorage.getItem(CACHE_DB_KEY);
       if (cachedRaw && !forceRefresh) {
         try {
           terapkanDataKeUI(JSON.parse(cachedRaw), 'Cache Instan');
@@ -195,20 +270,15 @@
       try {
         const res = await fetch(`${API_URL}?token=${encodeURIComponent(API_TOKEN)}`);
         const data = await res.json();
+        if (data.status !== 'success') throw new Error(data.message || 'Gagal memuat data.');
 
-        if (data.status !== 'success') {
-          throw new Error(data.message || 'Gagal memuat data.');
-        }
-
-        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        localStorage.setItem(CACHE_DB_KEY, JSON.stringify(data));
         const durasi = ((performance.now() - startTime) / 1000).toFixed(1);
         terapkanDataKeUI(data, `Sync ${durasi}d`);
 
         if (forceRefresh) showToast(`Database diperbarui (${durasi} detik)`);
       } catch (err) {
-        if (!cachedRaw) {
-          statusEl.textContent = 'Gagal terhubung ke Spreadsheet';
-        }
+        if (!cachedRaw) statusEl.textContent = 'Gagal terhubung ke Spreadsheet';
         showToast('Error: ' + err.message, 5000);
       }
     }
@@ -223,8 +293,6 @@
         selectBulan.value = bulanSebelumnya;
       } else if (bulanUnik.includes('November')) {
         selectBulan.value = 'November';
-      } else if (bulanUnik.includes('November 2026')) {
-        selectBulan.value = 'November 2026';
       }
       updateDropdownMinggu();
     }
@@ -253,24 +321,392 @@
       const colIndex = selectedOption ? Number(selectedOption.dataset.col) : null;
 
       document.getElementById('labelTargetKirim').textContent = `${bulan} - M${minggu}`;
-
-      // Saring peserta yang TIDAK berstatus ~PURNA~ di kolom target
-      pesertaAktif = rawPeserta.filter(p => !p.purnaCols.includes(colIndex));
-
-      // Set default status 'A' untuk peserta yang belum punya status
-      pesertaAktif.forEach(p => {
-        if (!statusMap[p.no]) statusMap[p.no] = 'A';
-      });
+      dbAktif = rawPeserta.filter(p => !p.purnaCols.includes(colIndex));
 
       document.getElementById('infoPesertaAktif').textContent =
-        `Peserta aktif pada kolom ini: ${pesertaAktif.length} orang (Peserta ~PURNA~ otomatis dilewati).`;
+        `DB aktif: ${dbAktif.length} orang (Peserta ~PURNA~ dilewati).`;
 
-      renderDaftarPeserta();
-      if (loadedImage) prosesDeteksiTinta();
+      // Muat susunan kertas dari cache jika tersedia, atau pakai default DB
+      if (paperRows.length === 0) {
+        const cachedKertas = localStorage.getItem(CACHE_KERTAS_KEY);
+        if (cachedKertas) {
+          try {
+            const parsed = JSON.parse(cachedKertas);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              paperRows = parsed.map((item, i) => {
+                // Re-evaluasi match ke DB terbaru
+                const match = cariKecocokanDB(item.paperName, item.paperClass, item.dbRowIndex);
+                return {
+                  paperNo: i + 1,
+                  paperName: item.paperName,
+                  paperClass: item.paperClass || '',
+                  dbRowIndex: match.dbRowIndex,
+                  dbName: match.dbName,
+                  matchType: match.matchType,
+                  addToDb: match.matchType === 'new' ? Boolean(item.addToDb) : false,
+                  status: 'A',
+                  inkScore: null
+                };
+              });
+              document.getElementById('statusRosterKertas').textContent =
+                `Memakai susunan kertas tersimpan (${paperRows.length} baris).`;
+              document.getElementById('wrapperTabelKertas').classList.remove('hidden');
+            }
+          } catch (e) {}
+        }
+      }
+
+      if (paperRows.length === 0 && dbAktif.length > 0) {
+        resetRosterKeDB(false);
+      } else {
+        renderSemuaUI();
+      }
     }
 
-    // 2. Tangani Input Gambar dari Kamera / Galeri
-    function handleUploadFoto(e) {
+    function resetRosterKeDB(notify = true) {
+      paperRows = dbAktif.map((p, idx) => ({
+        paperNo: idx + 1,
+        paperName: p.nama,
+        paperClass: p.kelas,
+        dbRowIndex: p.rowIndex,
+        dbName: p.nama,
+        matchType: 'exact',
+        addToDb: false,
+        status: 'A',
+        inkScore: null
+      }));
+      localStorage.removeItem(CACHE_KERTAS_KEY);
+      document.getElementById('statusRosterKertas').textContent =
+        'Menggunakan urutan default DB (Foto halaman nama kertas untuk cek orang baru).';
+      document.getElementById('wrapperTabelKertas').classList.remove('hidden');
+      renderSemuaUI();
+      if (notify) showToast('Urutan dikembalikan ke default DB.');
+    }
+
+    // ==========================================
+    // 2. SMART FUZZY MATCHING (NAMA KERTAS <-> DB)
+    // ==========================================
+    function normalisasiTeks(str) {
+      return String(str || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function levenshtein(a, b) {
+      const m = a.length, n = b.length;
+      const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          dp[i][j] = a[i - 1] === b[j - 1]
+            ? dp[i - 1][j - 1]
+            : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+        }
+      }
+      return dp[m][n];
+    }
+
+    function hitungSkorKemiripan(paperName, paperClass, dbItem) {
+      const pNorm = normalisasiTeks(paperName);
+      const dNorm = normalisasiTeks(dbItem.nama);
+      if (!pNorm || !dNorm) return 0;
+      if (pNorm === dNorm) return 1.0;
+
+      const pTokens = pNorm.split(' ');
+      const dTokens = dNorm.split(' ');
+
+      // Cek kecocokan per kata / inisial (misal "El Victorious Dharma S.M" vs "El Victorious Dharma Satrio Manullang")
+      let matchedTokens = 0;
+      pTokens.forEach(pt => {
+        if (pt.length === 1) {
+          // Cocokkan inisial
+          if (dTokens.some(dt => dt.startsWith(pt))) matchedTokens += 0.8;
+        } else {
+          // Cocokkan kata penuh atau typo ringan OCR (1-2 huruf)
+          const bestWordSim = Math.max(...dTokens.map(dt => {
+            const maxLen = Math.max(pt.length, dt.length);
+            return 1 - levenshtein(pt, dt) / maxLen;
+          }));
+          if (bestWordSim >= 0.72) matchedTokens += bestWordSim;
+        }
+      });
+
+      let score = matchedTokens / Math.max(pTokens.length, dTokens.length * 0.85);
+
+      // Bonus kecil jika kelas juga sama (misal X-F == X-F)
+      const pCls = normalisasiTeks(paperClass).replace(/\s/g, '');
+      const dCls = normalisasiTeks(dbItem.kelas).replace(/\s/g, '');
+      if (pCls && dCls && pCls === dCls) score += 0.08;
+
+      return Math.min(0.99, score);
+    }
+
+    function cariKecocokanDB(paperName, paperClass, preferredRowIndex = null) {
+      if (preferredRowIndex) {
+        const found = dbAktif.find(d => d.rowIndex === preferredRowIndex);
+        if (found) {
+          return {
+            dbRowIndex: found.rowIndex,
+            dbName: found.nama,
+            matchType: normalisasiTeks(paperName) === normalisasiTeks(found.nama) ? 'exact' : 'fuzzy'
+          };
+        }
+      }
+
+      let bestMatch = null;
+      let bestScore = 0;
+
+      dbAktif.forEach(d => {
+        const skor = hitungSkorKemiripan(paperName, paperClass, d);
+        if (skor > bestScore) {
+          bestScore = skor;
+          bestMatch = d;
+        }
+      });
+
+      if (bestMatch && bestScore >= 0.95) {
+        return { dbRowIndex: bestMatch.rowIndex, dbName: bestMatch.nama, matchType: 'exact' };
+      }
+      if (bestMatch && bestScore >= 0.55) {
+        return { dbRowIndex: bestMatch.rowIndex, dbName: bestMatch.nama, matchType: 'fuzzy' };
+      }
+      return { dbRowIndex: null, dbName: null, matchType: 'new' };
+    }
+
+    // ==========================================
+    // 3. OCR FOTO HALAMAN NAMA KERTAS (TESSERACT.JS)
+    // ==========================================
+    async function handleScanNamaKertas(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const progressBox = document.getElementById('ocrProgressBox');
+      const statusText = document.getElementById('ocrStatusText');
+      const pctText = document.getElementById('ocrPctText');
+      const progressBar = document.getElementById('ocrProgressBar');
+
+      progressBox.classList.remove('hidden');
+      statusText.textContent = 'Menyiapkan gambar kertas...';
+      pctText.textContent = '0%';
+      progressBar.style.width = '0%';
+
+      try {
+        // Pre-process kontras hitam-putih agar garis buku folio memudar & tulisan tangan tajam
+        const processedDataUrl = await preprocessImageForOCR(file);
+
+        const result = await Tesseract.recognize(processedDataUrl, 'eng', {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              const pct = Math.round((m.progress || 0) * 100);
+              statusText.textContent = 'Membaca nama & kelas di kertas...';
+              pctText.textContent = pct + '%';
+              progressBar.style.width = pct + '%';
+            }
+          }
+        });
+
+        const parsedRows = parseHasilOCRKertas(result.data.text);
+        if (parsedRows.length === 0) {
+          throw new Error('Teks nama tidak terbaca jelas. Coba foto lebih dekat & terang, atau tambah baris manual.');
+        }
+
+        paperRows = parsedRows.map((item, idx) => {
+          const match = cariKecocokanDB(item.nama, item.kelas);
+          return {
+            paperNo: idx + 1,
+            paperName: item.nama,
+            paperClass: item.kelas,
+            dbRowIndex: match.dbRowIndex,
+            dbName: match.dbName,
+            matchType: match.matchType,
+            addToDb: match.matchType === 'new', // Otomatis centang "Tambah Row" jika orang baru!
+            status: 'A',
+            inkScore: null
+          };
+        });
+
+        simpanRosterKertasKeCache();
+        document.getElementById('statusRosterKertas').textContent =
+          `Berhasil scan ${paperRows.length} baris dari foto kertas.`;
+        document.getElementById('wrapperTabelKertas').classList.remove('hidden');
+
+        renderSemuaUI();
+        if (loadedImageTTD) prosesDeteksiTinta();
+        showToast(`Scan selesai! Terbaca ${paperRows.length} nama dari kertas.`);
+      } catch (err) {
+        showToast('OCR Info: ' + err.message, 5000);
+      } finally {
+        progressBox.classList.add('hidden');
+        e.target.value = '';
+      }
+    }
+
+    function preprocessImageForOCR(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const targetW = Math.min(1400, img.width);
+            const scale = targetW / img.width;
+            canvas.width = targetW;
+            canvas.height = Math.round(img.height * scale);
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // Tingkatkan kontras grayscale agar tulisan pulpen gelap menonjol
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d = imgData.data;
+            for (let i = 0; i < d.length; i += 4) {
+              const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+              const contrasted = gray < 145 ? Math.max(0, gray * 0.65) : Math.min(255, gray * 1.15);
+              d[i] = d[i + 1] = d[i + 2] = contrasted;
+            }
+            ctx.putImageData(imgData, 0, 0);
+            resolve(canvas.toDataURL('image/jpeg', 0.9));
+          };
+          img.onerror = reject;
+          img.src = ev.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function parseHasilOCRKertas(rawText) {
+      const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+      const hasil = [];
+
+      lines.forEach(line => {
+        // Lewati header tabel
+        if (/^(nama|kelas|no|daftar|absen)/i.test(line)) return;
+
+        // Bersihkan simbol garis tabel OCR (|, [, ], _, —)
+        let clean = line.replace(/[|\[\]_~—=]+/g, ' ').replace(/\s+/g, ' ').trim();
+        // Hapus nomor baris di awal (misal "1 ", "12. ", "20 ")
+        clean = clean.replace(/^\d{1,2}[\.\)\-\s]+/, '').trim();
+        if (clean.length < 4) return;
+
+        // Ekstrak kelas di ujung baris (misal X-A, XI-D, XII-G, X.F)
+        let kelas = '';
+        const kelasMatch = clean.match(/\b(X{1,2}I?[\s\-\.]?[A-Z0-9])\s*$/i);
+        if (kelasMatch) {
+          kelas = kelasMatch[1].toUpperCase().replace(/[\s\.]/g, '-');
+          if (!kelas.includes('-') && kelas.length >= 2) {
+            kelas = kelas.slice(0, -1) + '-' + kelas.slice(-1);
+          }
+          clean = clean.slice(0, kelasMatch.index).trim();
+        }
+
+        // Pastikan nama minimal mengandung 3 huruf alfabet
+        const hurufSaja = clean.replace(/[^a-zA-Z]/g, '');
+        if (hurufSaja.length >= 3) {
+          hasil.push({ nama: clean, kelas: kelas || 'X-A' });
+        }
+      });
+
+      return hasil;
+    }
+
+    // Manipulasi Baris Kertas Manual (Edit Nama, Ganti Mapping DB, Centang Tambah Row)
+    function tambahBarisKertasManual() {
+      const nextNo = paperRows.length + 1;
+      paperRows.push({
+        paperNo: nextNo,
+        paperName: '',
+        paperClass: 'X-A',
+        dbRowIndex: null,
+        dbName: null,
+        matchType: 'new',
+        addToDb: true,
+        status: 'H',
+        inkScore: null
+      });
+      document.getElementById('wrapperTabelKertas').classList.remove('hidden');
+      simpanRosterKertasKeCache();
+      renderSemuaUI();
+    }
+
+    function hapusBarisKertas(idx) {
+      paperRows.splice(idx, 1);
+      paperRows.forEach((r, i) => r.paperNo = i + 1);
+      simpanRosterKertasKeCache();
+      renderSemuaUI();
+      if (loadedImageTTD) prosesDeteksiTinta();
+    }
+
+    function updateNamaKertas(idx, val) {
+      paperRows[idx].paperName = val;
+      const match = cariKecocokanDB(val, paperRows[idx].paperClass);
+      paperRows[idx].dbRowIndex = match.dbRowIndex;
+      paperRows[idx].dbName = match.dbName;
+      paperRows[idx].matchType = match.matchType;
+      if (match.matchType === 'new') paperRows[idx].addToDb = true;
+      simpanRosterKertasKeCache();
+      renderSemuaUI();
+    }
+
+    function updateKelasKertas(idx, val) {
+      paperRows[idx].paperClass = val.toUpperCase();
+      simpanRosterKertasKeCache();
+    }
+
+    function ubahMappingDB(idx, selectedRowIndexStr) {
+      if (selectedRowIndexStr === 'NEW') {
+        paperRows[idx].dbRowIndex = null;
+        paperRows[idx].dbName = null;
+        paperRows[idx].matchType = 'new';
+        paperRows[idx].addToDb = true;
+      } else {
+        const rowIndex = Number(selectedRowIndexStr);
+        const found = dbAktif.find(d => d.rowIndex === rowIndex);
+        if (found) {
+          paperRows[idx].dbRowIndex = found.rowIndex;
+          paperRows[idx].dbName = found.nama;
+          paperRows[idx].matchType = 'fuzzy';
+          paperRows[idx].addToDb = false;
+        }
+      }
+      simpanRosterKertasKeCache();
+      renderSemuaUI();
+    }
+
+    function toggleAddToDb(idx, checked) {
+      paperRows[idx].addToDb = checked;
+      simpanRosterKertasKeCache();
+      updateAlertOrangBaru();
+    }
+
+    function updateAlertOrangBaru() {
+      const orangBaruList = paperRows.filter(r => r.matchType === 'new');
+      const akanDitambah = orangBaruList.filter(r => r.addToDb && r.paperName.trim() !== '');
+
+      const alertBox = document.getElementById('alertOrangBaru');
+      const detailEl = document.getElementById('detailOrangBaru');
+      const footerLabel = document.getElementById('labelInfoTambahRow');
+
+      if (orangBaruList.length > 0) {
+        alertBox.classList.remove('hidden');
+        const namaList = orangBaruList.map(r => `#${r.paperNo} ${r.paperName || '(Belum diisi)'}`).join(', ');
+        detailEl.textContent = `${namaList} tidak ditemukan di Spreadsheet. Centang "Tambah Row" pada barisnya jika ingin otomatis menambah baris baru di DB.`;
+      } else {
+        alertBox.classList.add('hidden');
+      }
+
+      footerLabel.textContent = akanDitambah.length > 0
+        ? `+ ${akanDitambah.length} baris baru akan ditambahkan ke DB`
+        : '';
+    }
+
+    // ==========================================
+    // 4. DETEKSI KEPADATAN TINTA TTD (SESUAI JUMLAH BARIS KERTAS)
+    // ==========================================
+    function handleUploadFotoTTD(e) {
       const file = e.target.files[0];
       if (!file) return;
 
@@ -278,10 +714,10 @@
       reader.onload = function(event) {
         const img = new Image();
         img.onload = function() {
-          loadedImage = img;
+          loadedImageTTD = img;
           document.getElementById('areaKalibrasi').classList.remove('hidden');
           prosesDeteksiTinta();
-          showToast('Foto dimuat! Sesuaikan slider hijau agar pas dengan kolom TTD.');
+          showToast(`Foto TTD dimuat untuk ${paperRows.length} baris kertas!`);
         };
         img.src = event.target.result;
       };
@@ -298,9 +734,8 @@
       prosesDeteksiTinta();
     }
 
-    // 3. Mesin Deteksi Kepadatan Tinta TTD (Client-Side HTML5 Canvas)
     function prosesDeteksiTinta() {
-      if (!loadedImage || pesertaAktif.length === 0) return;
+      if (!loadedImageTTD || paperRows.length === 0) return;
 
       const topPct = Number(document.getElementById('rangeTop').value);
       const bottomPct = Number(document.getElementById('rangeBottom').value);
@@ -320,21 +755,21 @@
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
       const maxWidth = 900;
-      const scale = loadedImage.width > maxWidth ? maxWidth / loadedImage.width : 1;
-      canvas.width = Math.round(loadedImage.width * scale);
-      canvas.height = Math.round(loadedImage.height * scale);
+      const scale = loadedImageTTD.width > maxWidth ? maxWidth / loadedImageTTD.width : 1;
+      canvas.width = Math.round(loadedImageTTD.width * scale);
+      canvas.height = Math.round(loadedImageTTD.height * scale);
 
-      ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(loadedImageTTD, 0, 0, canvas.width, canvas.height);
 
       const areaX = Math.round((leftPct / 100) * canvas.width);
       const areaY = Math.round((topPct / 100) * canvas.height);
       const areaW = Math.max(10, Math.round(((rightPct - leftPct) / 100) * canvas.width));
       const areaH = Math.max(10, Math.round(((bottomPct - topPct) / 100) * canvas.height));
 
-      const totalRows = pesertaAktif.length;
+      const totalRows = paperRows.length;
       const rowHeight = areaH / totalRows;
 
-      pesertaAktif.forEach((p, idx) => {
+      paperRows.forEach((row, idx) => {
         const boxY = Math.round(areaY + idx * rowHeight);
         const boxH = Math.max(4, Math.round(rowHeight));
 
@@ -350,20 +785,15 @@
         const totalPixels = sampleW * sampleH;
 
         for (let i = 0; i < imgData.length; i += 4) {
-          const r = imgData[i];
-          const g = imgData[i + 1];
-          const b = imgData[i + 2];
-          const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-          if (gray < darknessThreshold) {
-            darkPixels++;
-          }
+          const gray = 0.299 * imgData[i] + 0.587 * imgData[i + 1] + 0.114 * imgData[i + 2];
+          if (gray < darknessThreshold) darkPixels++;
         }
 
         const inkRatio = (darkPixels / totalPixels) * 100;
-        inkScoreMap[p.no] = inkRatio.toFixed(1);
+        row.inkScore = inkRatio.toFixed(1);
 
         const isHadir = inkRatio >= minInkPct;
-        statusMap[p.no] = isHadir ? 'H' : 'A';
+        row.status = isHadir ? 'H' : 'A';
 
         ctx.strokeStyle = isHadir ? '#22c55e' : '#ef4444';
         ctx.lineWidth = 2;
@@ -373,29 +803,94 @@
         ctx.fillRect(areaX - 36, boxY + 1, 34, Math.max(12, boxH - 2));
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 10px sans-serif';
-        ctx.fillText(`${p.no}.${isHadir ? 'H' : 'A'}`, areaX - 33, boxY + Math.min(13, boxH - 3));
+        ctx.fillText(`${row.paperNo}.${isHadir ? 'H' : 'A'}`, areaX - 33, boxY + Math.min(13, boxH - 3));
       });
 
-      renderDaftarPeserta();
+      renderDaftarHasilAbsen();
     }
 
-    // 4. Render Daftar Peserta & Tombol Koreksi Manual (H / A / I / S)
-    function renderDaftarPeserta() {
+    // ==========================================
+    // 5. RENDER UI MAPPING KERTAS & DAFTAR ABSEN
+    // ==========================================
+    function renderSemuaUI() {
+      renderMappingKertas();
+      renderDaftarHasilAbsen();
+      updateAlertOrangBaru();
+    }
+
+    function renderMappingKertas() {
+      document.getElementById('totalBarisKertas').textContent = paperRows.length;
+      const container = document.getElementById('listMappingKertas');
+
+      container.innerHTML = paperRows.map((row, idx) => {
+        const isNew = row.matchType === 'new';
+        const isFuzzy = row.matchType === 'fuzzy';
+
+        const badge = isNew
+          ? `<span class="text-[10px] bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded">BARU</span>`
+          : isFuzzy
+            ? `<span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">COCOK MIRIP</span>`
+            : `<span class="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.5 rounded">COCOK DB</span>`;
+
+        const optionsDB = dbAktif.map(d =>
+          `<option value="${d.rowIndex}" ${row.dbRowIndex === d.rowIndex ? 'selected' : ''}>DB #${d.no}: ${d.nama} (${d.kelas})</option>`
+        ).join('');
+
+        return `
+          <div class="py-2 space-y-1.5 text-xs">
+            <div class="flex items-center gap-1.5">
+              <span class="font-mono font-bold text-slate-400 w-5 shrink-0">${row.paperNo}.</span>
+              <input type="text" value="${row.paperName}" placeholder="Ketik nama di kertas..."
+                onchange="updateNamaKertas(${idx}, this.value)"
+                class="flex-1 min-w-0 border border-slate-300 rounded px-2 py-1 text-xs bg-white font-medium" />
+              <input type="text" value="${row.paperClass}" placeholder="Kelas"
+                onchange="updateKelasKertas(${idx}, this.value)"
+                class="w-14 border border-slate-300 rounded px-1.5 py-1 text-xs bg-white text-center uppercase" />
+              <button onclick="hapusBarisKertas(${idx})" class="text-red-500 hover:text-red-700 px-1 font-bold" title="Hapus baris">✕</button>
+            </div>
+
+            <div class="pl-6 flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 flex-1 min-w-[180px]">
+                ${badge}
+                <select onchange="ubahMappingDB(${idx}, this.value)" class="flex-1 min-w-0 border border-slate-200 rounded px-1.5 py-1 text-[11px] bg-white text-slate-700">
+                  <option value="NEW" ${isNew ? 'selected' : ''}>-- Tidak ada di DB (Orang Baru) --</option>
+                  ${optionsDB}
+                </select>
+              </div>
+
+              ${isNew ? `
+                <label class="flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded cursor-pointer">
+                  <input type="checkbox" ${row.addToDb ? 'checked' : ''} onchange="toggleAddToDb(${idx}, this.checked)" />
+                  Tambah Row DB
+                </label>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderDaftarHasilAbsen() {
       const container = document.getElementById('listPesertaContainer');
-      if (pesertaAktif.length === 0) {
-        container.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Tidak ada peserta aktif.</p>';
+      if (paperRows.length === 0) {
+        container.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Belum ada data baris kertas.</p>';
         return;
       }
 
       let countH = 0, countA = 0, countIS = 0;
 
-      container.innerHTML = pesertaAktif.map(p => {
-        const st = statusMap[p.no] || 'A';
+      container.innerHTML = paperRows.map((row, idx) => {
+        const st = row.status || 'A';
         if (st === 'H') countH++;
         else if (st === 'A') countA++;
         else countIS++;
 
-        const inkInfo = inkScoreMap[p.no] !== undefined ? ` • Tinta: ${inkScoreMap[p.no]}%` : '';
+        const inkInfo = row.inkScore !== null ? ` • Tinta: ${row.inkScore}%` : '';
+        const targetDbInfo = row.dbRowIndex
+          ? `<span class="text-emerald-700 font-medium">→ Masuk ke: ${row.dbName}</span>`
+          : row.addToDb
+            ? `<span class="text-amber-700 font-bold">→ Tambah Row Baru ke DB</span>`
+            : `<span class="text-slate-400">→ Dilewati (Tidak di DB)</span>`;
 
         const btnClass = (kode, activeColor) =>
           st === kode
@@ -406,15 +901,15 @@
           <div class="py-2.5 flex items-center justify-between gap-2">
             <div class="min-w-0">
               <p class="text-sm font-semibold text-slate-800 truncate">
-                <span class="text-slate-400 font-mono mr-1">${p.no}.</span>${p.nama}
+                <span class="text-slate-400 font-mono mr-1">Kertas #${row.paperNo}.</span>${row.paperName || '(Tanpa Nama)'}
               </p>
-              <p class="text-[11px] text-slate-500">${p.kelas}${inkInfo}</p>
+              <p class="text-[11px] text-slate-500 truncate">${targetDbInfo}${inkInfo}</p>
             </div>
             <div class="flex gap-1 shrink-0">
-              <button onclick="ubahStatus(${p.no}, 'H')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('H', 'bg-emerald-600')}">H</button>
-              <button onclick="ubahStatus(${p.no}, 'A')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('A', 'bg-red-600')}">A</button>
-              <button onclick="ubahStatus(${p.no}, 'I')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('I', 'bg-amber-500')}">I</button>
-              <button onclick="ubahStatus(${p.no}, 'S')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('S', 'bg-cyan-600')}">S</button>
+              <button onclick="ubahStatusKertas(${idx}, 'H')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('H', 'bg-emerald-600')}">H</button>
+              <button onclick="ubahStatusKertas(${idx}, 'A')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('A', 'bg-red-600')}">A</button>
+              <button onclick="ubahStatusKertas(${idx}, 'I')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('I', 'bg-amber-500')}">I</button>
+              <button onclick="ubahStatusKertas(${idx}, 'S')" class="w-8 h-8 rounded-lg text-xs transition ${btnClass('S', 'bg-cyan-600')}">S</button>
             </div>
           </div>
         `;
@@ -425,12 +920,14 @@
       document.getElementById('countIS').textContent = `I/S: ${countIS}`;
     }
 
-    function ubahStatus(noPeserta, statusBaru) {
-      statusMap[noPeserta] = statusBaru;
-      renderDaftarPeserta();
+    function ubahStatusKertas(idx, statusBaru) {
+      paperRows[idx].status = statusBaru;
+      renderDaftarHasilAbsen();
     }
 
-    // 5. Kirim Hasil Akhir ke Google Sheets via Apps Script (doPost)
+    // ==========================================
+    // 6. KIRIM HASIL KE SPREADSHEET (BY NAMA + ADD NEW ROWS)
+    // ==========================================
     async function kirimKeSpreadsheet() {
       const bulan = document.getElementById('selectBulan').value;
       const minggu = Number(document.getElementById('selectMinggu').value);
@@ -440,14 +937,30 @@
         return;
       }
 
+      // Data peserta yang sudah ada di DB (dikirim berdasarkan rowIndex & nama DB-nya)
+      const absensiExisting = paperRows
+        .filter(r => r.dbRowIndex !== null)
+        .map(r => ({
+          rowIndex: r.dbRowIndex,
+          nama: r.dbName,
+          status: r.status || 'A'
+        }));
+
+      // Data orang baru yang dicentang "Tambah Row DB"
+      const pesertaBaru = paperRows
+        .filter(r => r.dbRowIndex === null && r.addToDb && r.paperName.trim() !== '')
+        .map(r => ({
+          nama: r.paperName.trim(),
+          kelas: r.paperClass.trim() || 'X-A',
+          status: r.status || 'A'
+        }));
+
       const payload = {
         token: API_TOKEN,
         bulan: bulan,
         minggu: minggu,
-        absensi: pesertaAktif.map(p => ({
-          no: p.no,
-          status: statusMap[p.no] || 'A'
-        }))
+        absensi: absensiExisting,
+        pesertaBaru: pesertaBaru
       };
 
       const btn = document.getElementById('btnKirim');
@@ -464,6 +977,21 @@
         const result = await response.json();
         if (result.status === 'success') {
           showToast(result.message, 5000);
+          // Jika ada penambahan row baru, refresh cache DB supaya baris baru langsung dikenali
+          if (result.added > 0) {
+            await muatDataAwal(true);
+            paperRows.forEach(r => {
+              if (r.addToDb) {
+                const match = cariKecocokanDB(r.paperName, r.paperClass);
+                r.dbRowIndex = match.dbRowIndex;
+                r.dbName = match.dbName;
+                r.matchType = match.matchType;
+                r.addToDb = false;
+              }
+            });
+            simpanRosterKertasKeCache();
+            renderSemuaUI();
+          }
         } else {
           throw new Error(result.message || 'Gagal menyimpan data.');
         }
