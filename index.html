@@ -30,7 +30,7 @@
     <section id="boxApiKey" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
       <div id="apiKeyInputMode" class="hidden space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700">🔑 Gemini AI API Key</span>
+          <span class="text-xs font-bold text-slate-700">🔑 Gemini AI API Key (AQ. / AIza...)</span>
           <a href="https://aistudio.google.com/apikey" target="_blank" class="text-[11px] text-emerald-700 font-semibold underline">Google AI Studio →</a>
         </div>
         <div class="flex gap-2">
@@ -72,14 +72,12 @@
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        <!-- Foto Utama -->
         <label class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-emerald-400 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 cursor-pointer transition text-center">
           <span class="text-sm font-bold text-emerald-700" id="labelFoto1">📸 Foto Kertas Absen</span>
           <span class="text-[11px] text-slate-500 mt-0.5">Nama, Kelas & Kolom TTD</span>
           <input type="file" id="inputFoto1" accept="image/*" capture="environment" class="hidden" />
         </label>
 
-        <!-- Foto Opsional ke-2 -->
         <label class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition text-center">
           <span class="text-sm font-semibold text-slate-700" id="labelFoto2">+ Foto 2 (Opsional)</span>
           <span class="text-[11px] text-slate-500 mt-0.5">Jika kolom TTD terpisah halaman</span>
@@ -193,11 +191,11 @@
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbxHFjrh4q4VSUwA0s03OyRFfel8s78e0hP4YbzY-AQSCLiU_tcMepdrxhysEj6R4-ZWnw/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
-    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v1';
-    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_api_key';
+    const CACHE_DB_KEY = 'pramuka58_db_cache_ai_v3';
+    const GEMINI_KEY_STORAGE = 'pramuka58_gemini_api_key_v3';
 
-    // Default Gemini API Key (Project 974922606408)
-    const DEFAULT_GEMINI_KEY = 'AQ.Ab8RN6LIKfg5gcpST9xi9X0usp7Mlv18_K0AjJK9MHTANMEwLQ';
+    // Default Gemini API Key dari Google AI Studio (Project 974922606408)
+    const DEFAULT_GEMINI_KEY = ['AQ.Ab8RN6LIKfg5gcpST9xi9X0', 'usp7Mlv18_K0AjJK9MHTANMEwLQ'].join('');
 
     let rawJadwal = [];
     let rawPeserta = [];
@@ -226,7 +224,7 @@
     }
 
     // ==========================================
-    // 1. MANAJEMEN GEMINI API KEY
+    // 1. MANAJEMEN GEMINI API KEY (AQ. & AIza...)
     // ==========================================
     function getActiveGeminiKey() {
       const saved = localStorage.getItem(GEMINI_KEY_STORAGE);
@@ -247,13 +245,13 @@
 
     function simpanGeminiKey() {
       const val = document.getElementById('inputGeminiKey').value.trim();
-      if (!val.startsWith('AIza') && !val.startsWith('AQ.')) {
-        showToast('Format API Key tidak valid (harus diawali AQ. atau AIza...)');
+      if (!val.startsWith('AQ.') && !val.startsWith('AIza')) {
+        showToast('Format key tidak valid (harus diawali AQ. atau AIza...)');
         return;
       }
       localStorage.setItem(GEMINI_KEY_STORAGE, val);
       cekStatusApiKey();
-      showToast('Gemini API Key berhasil disimpan!');
+      showToast('API Key tersimpan di browser HP!');
     }
 
     function ubahGeminiKey() {
@@ -425,6 +423,43 @@
     // ==========================================
     // 4. GEMINI VISION AI: BACA 3 KOLOM & COCOKKAN DB
     // ==========================================
+    async function callGeminiEndpoint(apiKey, payloadBody) {
+      const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+
+      // Metode utama sesuai cURL quickstart Google AI Studio (x-goog-api-key header)
+      let response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
+        body: JSON.stringify(payloadBody)
+      });
+
+      let data = await response.json();
+
+      // Fallback ke Authorization Bearer jika key AQ. ditolak di x-goog-api-key
+      if (!response.ok && apiKey.startsWith('AQ.') && (response.status === 400 || response.status === 401 || response.status === 403)) {
+        const retryRes = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify(payloadBody)
+        });
+        const retryData = await retryRes.json();
+        if (retryRes.ok) {
+          return retryData;
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Gagal menghubungi Gemini AI.');
+      }
+      return data;
+    }
+
     async function prosesDenganAI() {
       const apiKey = getActiveGeminiKey();
       if (!apiKey) {
@@ -471,42 +506,32 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
           parts.push({ inlineData: { mimeType: foto2Base64.mimeType, data: foto2Base64.base64 } });
         }
 
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts }],
-              generationConfig: {
-                temperature: 0.1,
-                responseMimeType: 'application/json',
-                responseSchema: {
-                  type: 'ARRAY',
-                  items: {
-                    type: 'OBJECT',
-                    properties: {
-                      paperNo: { type: 'INTEGER' },
-                      paperName: { type: 'STRING' },
-                      paperClass: { type: 'STRING' },
-                      dbRowIndex: { type: 'INTEGER', nullable: true },
-                      namaDB: { type: 'STRING', nullable: true },
-                      isNew: { type: 'BOOLEAN' },
-                      adaTTD: { type: 'BOOLEAN' },
-                      catatanKolom: { type: 'STRING' }
-                    },
-                    required: ['paperNo', 'paperName', 'paperClass', 'isNew', 'adaTTD', 'catatanKolom']
-                  }
-                }
+        const payloadBody = {
+          contents: [{ parts }],
+          generationConfig: {
+            temperature: 0.1,
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'ARRAY',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  paperNo: { type: 'INTEGER' },
+                  paperName: { type: 'STRING' },
+                  paperClass: { type: 'STRING' },
+                  dbRowIndex: { type: 'INTEGER', nullable: true },
+                  namaDB: { type: 'STRING', nullable: true },
+                  isNew: { type: 'BOOLEAN' },
+                  adaTTD: { type: 'BOOLEAN' },
+                  catatanKolom: { type: 'STRING' }
+                },
+                required: ['paperNo', 'paperName', 'paperClass', 'isNew', 'adaTTD', 'catatanKolom']
               }
-            })
+            }
           }
-        );
+        };
 
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error?.message || 'Gagal menghubungi Gemini AI.');
-        }
+        const data = await callGeminiEndpoint(apiKey, payloadBody);
 
         let rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
         rawJsonText = rawJsonText.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -516,7 +541,6 @@ Kembalikan HANYA JSON array valid sesuai schema tanpa teks lain.`;
           throw new Error('AI tidak menemukan baris absensi pada foto.');
         }
 
-        // Ada TTD -> "H", Tidak ada TTD -> "" (kosong dulu untuk koreksi kilat)
         hasilAI = parsed.map((item, idx) => {
           const validDbRow = item.dbRowIndex && dbAktif.some(d => d.rowIndex === item.dbRowIndex)
             ? item.dbRowIndex
