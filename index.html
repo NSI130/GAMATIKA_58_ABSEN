@@ -16,7 +16,7 @@
 </head>
 <body class="min-h-screen pb-32">
 
-  <!-- Header / Navbar Estetik -->
+  <!-- Header / Navbar -->
   <header class="bg-[#eaf1ec] border-b border-[#d8e4dc] sticky top-0 z-30 shadow-xs backdrop-blur-md bg-opacity-90">
     <div class="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">
       <div class="flex items-center gap-2.5">
@@ -25,10 +25,10 @@
         </div>
         <div>
           <h1 class="font-extrabold text-sm sm:text-base tracking-tight text-[#2c3e35]">Pramuka Ambalan 58</h1>
-          <p class="text-[11px] text-[#556b5f] font-medium" id="statusKoneksi" aria-live="polite">Menghubungkan ke Database...</p>
+          <p class="text-[11px] text-[#556b5f] font-medium" id="statusKoneksi">Menghubungkan ke Database...</p>
         </div>
       </div>
-      <button type="button" id="btnRefresh" aria-label="Refresh database" class="text-xs bg-[#2c3e35] hover:bg-[#1a2620] text-white px-3.5 py-2 rounded-xl font-semibold shadow-sm transition active:scale-95">
+      <button id="btnRefresh" class="text-xs bg-[#2c3e35] hover:bg-[#1a2620] text-white px-3.5 py-2 rounded-xl font-semibold shadow-sm transition active:scale-95">
         ↻ Refresh DB
       </button>
     </div>
@@ -36,7 +36,7 @@
 
   <main class="max-w-3xl mx-auto px-4 pt-6 space-y-6">
 
-    <!-- Hero / Banner Pengantar -->
+    <!-- Hero Banner -->
     <section class="bg-[#dbe6df] border border-[#c5d7cc] rounded-3xl p-6 relative overflow-hidden shadow-sm">
       <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-[#c5d7cc] rounded-full opacity-40 pointer-events-none"></div>
       <div class="relative z-10 space-y-1">
@@ -50,7 +50,7 @@
       </div>
     </section>
 
-    <!-- Step 1: Pilih Jadwal (Auto-Detect dengan opsi manual) -->
+    <!-- Step 1: Pilih Jadwal -->
     <section class="bg-white p-5 rounded-3xl shadow-sm border border-[#e2ece5] space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-xs font-bold uppercase tracking-wider text-[#708a7b]">1. Jadwal Pertemuan</h3>
@@ -58,17 +58,17 @@
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label for="selectBulan" class="block text-xs font-bold text-[#4a5f53] mb-1.5">Bulan</label>
+          <label class="block text-xs font-bold text-[#4a5f53] mb-1.5">Bulan</label>
           <select id="selectBulan" class="w-full border border-[#d8e4dc] rounded-2xl px-4 py-2.5 text-sm bg-[#f9fbf9] text-[#2c3e35] font-semibold focus:outline-none focus:border-[#2c3e35] transition"></select>
         </div>
         <div>
-          <label for="selectMinggu" class="block text-xs font-bold text-[#4a5f53] mb-1.5">Minggu ke-</label>
+          <label class="block text-xs font-bold text-[#4a5f53] mb-1.5">Minggu ke-</label>
           <select id="selectMinggu" class="w-full border border-[#d8e4dc] rounded-2xl px-4 py-2.5 text-sm bg-[#f9fbf9] text-[#2c3e35] font-semibold focus:outline-none focus:border-[#2c3e35] transition"></select>
         </div>
       </div>
       <div class="flex items-center justify-between pt-3 border-t border-[#f0f4f1] text-xs">
         <span class="text-[#556b5f] font-medium" id="infoPesertaAktif">Memuat peserta...</span>
-        <button type="button" id="btnSetHadir" class="text-[#2c3e35] font-bold hover:underline bg-[#eaf1ec] px-3 py-1.5 rounded-xl transition">
+        <button id="btnSetHadir" class="text-[#2c3e35] font-bold hover:underline bg-[#eaf1ec] px-3 py-1.5 rounded-xl transition">
           ✓ Set Semua Hadir (H)
         </button>
       </div>
@@ -81,49 +81,45 @@
         <span class="text-xs font-extrabold bg-[#eaf1ec] text-[#2c3e35] px-3 py-1 rounded-full" id="totalPesertaLabel">0 peserta</span>
       </div>
 
-      <!-- Form Tambah Nama Baru & Pengecekan Double -->
+      <!-- Form Tambah Nama Baru -->
       <div class="bg-[#f9fbf9] p-4 rounded-2xl border border-[#d8e4dc] space-y-2.5">
         <span class="text-xs font-extrabold text-[#2c3e35] block">+ Tambah Anggota Baru</span>
         <div class="flex gap-2">
-          <input type="text" id="inputNamaBaru" autocomplete="name" maxlength="100" placeholder="Nama Lengkap Anggota" class="flex-1 border border-[#d8e4dc] rounded-xl px-3.5 py-2 text-xs bg-white text-[#2c3e35] font-medium focus:outline-none focus:border-[#2c3e35]" />
-          <select id="inputKelasBaru" class="w-32 border border-[#d8e4dc] rounded-xl px-2 py-2 text-xs bg-white text-[#2c3e35] font-semibold focus:outline-none focus:border-[#2c3e35]">
-            <!-- Kelas X-A s.d X-I -->
+          <input type="text" id="inputNamaBaru" placeholder="Nama Lengkap Anggota" class="flex-1 border border-[#d8e4dc] rounded-xl px-3.5 py-2 text-xs bg-white text-[#2c3e35] font-medium focus:outline-none focus:border-[#2c3e35]" />
+          <select id="inputKelasBaru" class="w-28 border border-[#d8e4dc] rounded-xl px-2 py-2 text-xs bg-white text-[#2c3e35] font-semibold focus:outline-none focus:border-[#2c3e35]">
             <option value="X-A">X-A</option><option value="X-B">X-B</option><option value="X-C">X-C</option>
             <option value="X-D">X-D</option><option value="X-E">X-E</option><option value="X-F">X-F</option>
             <option value="X-G">X-G</option><option value="X-H">X-H</option><option value="X-I">X-I</option>
-            <!-- Kelas XI-A s.d XI-H -->
             <option value="XI-A">XI-A</option><option value="XI-B">XI-B</option><option value="XI-C">XI-C</option>
             <option value="XI-D">XI-D</option><option value="XI-E">XI-E</option><option value="XI-F">XI-F</option>
             <option value="XI-G">XI-G</option><option value="XI-H">XI-H</option>
-            <!-- Kelas XII-A s.d XII-H -->
             <option value="XII-A">XII-A</option><option value="XII-B">XII-B</option><option value="XII-C">XII-C</option>
             <option value="XII-D">XII-D</option><option value="XII-E">XII-E</option><option value="XII-F">XII-F</option>
             <option value="XII-G">XII-G</option><option value="XII-H">XII-H</option>
           </select>
-          <button type="button" id="btnTambahPeserta" class="bg-[#2c3e35] hover:bg-[#1a2620] text-white text-xs font-bold px-4 py-2 rounded-xl shrink-0 transition active:scale-95 shadow-xs">
+          <button id="btnTambahPeserta" class="bg-[#2c3e35] hover:bg-[#1a2620] text-white text-xs font-bold px-4 py-2 rounded-xl shrink-0 transition active:scale-95 shadow-xs">
             Tambah
           </button>
         </div>
-        <!-- Peringatan Double Input -->
-        <div id="warningDouble" role="status" aria-live="polite" class="hidden text-[11px] text-amber-900 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+        <div id="warningDouble" class="hidden text-[11px] text-amber-900 font-bold bg-amber-50 p-2.5 rounded-xl border border-amber-200">
           ⚠️ Peringatan: Nama ini sudah terdaftar di database!
         </div>
       </div>
 
       <!-- List Data Peserta -->
-      <div id="listAbsensi" aria-live="polite" class="divide-y divide-[#f0f4f1] mt-2"></div>
+      <div id="listAbsensi" class="divide-y divide-[#f0f4f1] mt-2"></div>
     </section>
 
   </main>
 
-  <!-- Floating Bottom Action Bar Estetik -->
+  <!-- Floating Bottom Action Bar -->
   <div class="fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-md border-t border-[#d8e4dc] p-3.5 shadow-lg z-30">
     <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
       <div class="text-xs text-[#556b5f] leading-tight pl-1">
         Target Simpan: <strong id="labelTargetKirim" class="text-[#2c3e35] font-bold">-</strong>
-        <div class="text-[11px] font-semibold text-emerald-700 mt-0.5" id="labelStatusBawah" aria-live="polite">Periksa status lalu kirim</div>
+        <div class="text-[11px] font-semibold text-emerald-700 mt-0.5" id="labelStatusBawah">Periksa status lalu kirim</div>
       </div>
-      <button type="button" id="btnKirim"
+      <button id="btnKirim"
         class="bg-[#2c3e35] hover:bg-[#1a2620] active:scale-95 text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-2xl shadow-md transition shrink-0 flex items-center gap-2">
         <span>Kirim ke Sheets</span>
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
@@ -135,9 +131,9 @@
   <div id="toast" class="fixed top-20 inset-x-4 max-w-sm mx-auto bg-[#2c3e35] text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl hidden z-50 text-center border border-[#4a5f53]"></div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbywHsL_aU9z9RMe9rgdlFANB_5SfYaf22kJXkSR5DkBxloTSITPAGhajrQqbw3XgFgSKw/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxhjY1354QgTmLQNZ21k8S2Za3tJ7xBdbSReiAYX4NWF0BpNGnB7Qhki9J5R4jDnYgVEg/exec';
     const API_TOKEN = 'PRAMUKA_58_SECRET_2026';
-    const CACHE_DB_KEY = 'pramuka58_db_manual_v3';
+    const CACHE_DB_KEY = 'pramuka58_db_manual_v6';
     const CACHE_TTL = 5 * 60 * 1000;
     const REQUEST_TIMEOUT = 15000;
     const STATUS_CODES = new Set(['H', 'S', 'I', 'A']);
@@ -146,7 +142,6 @@
     let rawJadwal = [];
     let rawPeserta = [];
     let absensiData = [];
-    let pesertaNamaSet = new Set();
     let isUserManualOverride = false;
     let isLoading = false;
     let isSubmitting = false;
@@ -181,6 +176,8 @@
       });
       els.selectMinggu.addEventListener('change', () => {
         isUserManualOverride = true;
+        els.badgeAutoDetect.textContent = '🛠️ Manual Selection';
+        els.badgeAutoDetect.className = 'text-[10px] bg-[#e2ece5] text-[#2c3e35] font-bold px-3 py-1 rounded-full';
         buildListAbsensi();
       });
     });
@@ -225,13 +222,13 @@
     function terapkanDataKeUI(data, sumberLabel) {
       rawJadwal = Array.isArray(data.jadwal) ? data.jadwal : [];
       rawPeserta = Array.isArray(data.peserta) ? data.peserta : [];
-      pesertaNamaSet = new Set(rawPeserta.map(p => normalizeName(p.nama)).filter(Boolean));
       isiDropdownBulan();
       els.statusKoneksi.textContent = `Terhubung: ${data.sheetName || 'Database'} (${sumberLabel})`;
     }
 
     function isiDropdownBulan() {
-      const bulanUnik = [...new Set(rawJadwal.map(j => String(j.bulan || '').trim()).filter(Boolean))];
+      const bulanUnik = [...new Set(rawJadwal.map(j => j.bulan).filter(Boolean))];
+      const prevBulan = els.selectBulan.value;
       els.selectBulan.innerHTML = bulanUnik
         .map(b => `<option value="${escapeHTML(b)}">${escapeHTML(b)}</option>`)
         .join('');
@@ -239,6 +236,7 @@
       if (!isUserManualOverride) {
         autoDetectJadwal(bulanUnik);
       } else {
+        if (prevBulan && bulanUnik.includes(prevBulan)) els.selectBulan.value = prevBulan;
         updateDropdownMinggu();
       }
     }
@@ -251,7 +249,7 @@
         els.selectBulan.value = bulanIniNama;
       }
 
-      updateDropdownMinggu(false);
+      updateDropdownMinggu();
 
       const tanggalHariIni = now.getDate();
       const perkiraanMinggu = Math.min(Math.ceil(tanggalHariIni / 7), 4);
@@ -266,18 +264,18 @@
       buildListAbsensi();
     }
 
-    function updateDropdownMinggu(shouldRender = true) {
+    function updateDropdownMinggu() {
       const bulanTerpilih = els.selectBulan.value;
       const selectMinggu = els.selectMinggu;
       const prev = selectMinggu.value;
       const mingguList = rawJadwal.filter(j => j.bulan === bulanTerpilih);
 
       selectMinggu.innerHTML = mingguList
-        .map(m => `<option value="${escapeHTML(m.minggu)}" data-col="${escapeHTML(m.colIndex)}">Minggu ke-${escapeHTML(m.minggu)} (Kolom ${escapeHTML(m.colLetter)})</option>`)
+        .map(m => `<option value="${m.minggu}" data-col="${m.colIndex}" data-letter="${m.colLetter}">Minggu ke-${m.minggu} (Kolom ${m.colLetter})</option>`)
         .join('');
 
       if (prev && mingguList.some(m => String(m.minggu) === prev)) selectMinggu.value = prev;
-      if (shouldRender) buildListAbsensi();
+      buildListAbsensi();
     }
 
     function cekNamaDouble(val) {
@@ -286,7 +284,7 @@
         els.warningDouble.classList.add('hidden');
         return;
       }
-      const isExist = pesertaNamaSet.has(query)
+      const isExist = rawPeserta.some(p => normalizeName(p.nama) === query)
         || absensiData.some(p => normalizeName(p.nama) === query);
       els.warningDouble.classList.toggle('hidden', !isExist);
     }
@@ -297,22 +295,23 @@
       const minggu = Number(selectMinggu.value);
       const opt = selectMinggu.options[selectMinggu.selectedIndex];
       const colIndex = opt ? Number(opt.dataset.col) : null;
+      const colLetter = opt ? (opt.dataset.letter || '') : '';
       const pesertaBaruSesiIni = absensiData.filter(item => item.isNew);
 
-      els.labelTargetKirim.textContent = `${bulan || '-'} - M${minggu || '-'}`;
+      els.labelTargetKirim.textContent = colLetter
+        ? `${bulan || '-'} - M${minggu || '-'} (Kolom ${colLetter})`
+        : `${bulan || '-'} - M${minggu || '-'}`;
 
       const dbAktif = rawPeserta.filter(p => !Array.isArray(p.purnaCols) || !p.purnaCols.includes(colIndex));
       els.infoPesertaAktif.textContent = `Total peserta aktif: ${dbAktif.length}`;
 
-      const existingMap = new Map(absensiData.map(item => [participantKey(item), item.status]));
+      const existingMap = new Map(absensiData.map(item => [item.rowIndex ?? `new:${normalizeName(item.nama)}`, item.status]));
 
       absensiData = dbAktif.map(p => ({
         rowIndex: p.rowIndex,
         nama: p.nama,
         kelas: p.kelas,
-        status: STATUS_CODES.has(existingMap.get(participantKey(p)))
-          ? existingMap.get(participantKey(p))
-          : 'H',
+        status: existingMap.get(p.rowIndex) || 'H',
         isNew: false
       }));
       absensiData.push(...pesertaBaruSesiIni);
@@ -339,7 +338,7 @@
       container.innerHTML = absensiData.map((item, idx) => {
         const st = item.status;
         const btnClass = (kode, activeColor) =>
-          st === kode ? `${activeColor} text-white font-bold shadow-xs scale-105` : `bg-[#f0f4f1] text-[#4a5f53] hover:bg-[#e2ece5]`;
+          st === kode ? `${activeColor} font-bold shadow-xs scale-105` : `bg-[#f0f4f1] text-[#4a5f53] hover:bg-[#e2ece5]`;
 
         const badgeBaru = item.isNew ? `<span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold ml-1.5">Baru</span>` : '';
 
@@ -355,10 +354,10 @@
             </div>
 
             <div class="flex gap-1.5 shrink-0">
-              <button data-index="${idx}" data-status="H" class="w-8 h-8 rounded-xl text-xs transition font-bold ${btnClass('H', 'bg-emerald-600')}">H</button>
-              <button data-index="${idx}" data-status="S" class="w-8 h-8 rounded-xl text-xs transition font-bold ${btnClass('S', 'bg-cyan-600')}">S</button>
-              <button data-index="${idx}" data-status="I" class="w-8 h-8 rounded-xl text-xs transition font-bold ${btnClass('I', 'bg-purple-600')}">I</button>
-              <button data-index="${idx}" data-status="A" class="w-8 h-8 rounded-xl text-xs transition font-bold ${btnClass('A', 'bg-red-600')}">A</button>
+              <button data-index="${idx}" data-status="H" class="w-8 h-8 rounded-xl text-xs transition font-bold ${btnClass('H', 'bg-[#00c853] text-white')}">H</button>
+              <button data-index="${idx}" data-status="S" class="w-8 h-8 rounded-xl text-xs transition font-bold ${btnClass('S', 'bg-[#00bcd4] text-white')}">S</button>
+              <button data-index="${idx}" data-status="I" class="w-8 h-8 rounded-xl text-xs transition font-bold ${btnClass('I', 'bg-[#ffd600] text-[#1a2620]')}">I</button>
+              <button data-index="${idx}" data-status="A" class="w-8 h-8 rounded-xl text-xs transition font-bold ${btnClass('A', 'bg-[#ff1744] text-white')}">A</button>
             </div>
           </div>
         `;
@@ -390,7 +389,7 @@
       }
 
       const normalizedName = normalizeName(nama);
-      const isDouble = pesertaNamaSet.has(normalizedName)
+      const isDouble = rawPeserta.some(p => normalizeName(p.nama) === normalizedName)
         || absensiData.some(p => normalizeName(p.nama) === normalizedName);
       if (isDouble) {
         if (!confirm(`Nama "${nama}" sudah ada di daftar. Tetap ingin menambahkan?`)) return;
@@ -420,9 +419,14 @@
         return;
       }
 
-      const absensiExisting = absensiData
-        .filter(r => !r.isNew && r.rowIndex !== null)
-        .map(r => ({ rowIndex: r.rowIndex, nama: r.nama, status: r.status }));
+      const uniqueExisting = new Map();
+      absensiData.forEach(r => {
+        if (!r.isNew && r.rowIndex !== null && !uniqueExisting.has(r.rowIndex)) {
+          uniqueExisting.set(r.rowIndex, { rowIndex: r.rowIndex, nama: r.nama, status: r.status });
+        }
+      });
+
+      const absensiExisting = Array.from(uniqueExisting.values());
 
       const pesertaBaru = absensiData
         .filter(r => r.isNew && r.nama.trim() !== '')
@@ -452,6 +456,7 @@
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
         if (result.status === 'success') {
+          absensiData = absensiData.filter(item => !item.isNew);
           showToast(result.message, 5000);
           await muatDataAwal(true);
         } else {
@@ -473,10 +478,7 @@
         if (!raw) return null;
         const parsed = JSON.parse(raw);
         const data = parsed.data || parsed;
-        if (!data || data.status !== 'success') {
-          localStorage.removeItem(CACHE_DB_KEY);
-          return null;
-        }
+        if (!data || data.status !== 'success') return null;
         const savedAt = Number(parsed.savedAt || 0);
         return { data, stale: savedAt > 0 && Date.now() - savedAt > CACHE_TTL };
       } catch {
@@ -488,9 +490,7 @@
     function simpanCache(data) {
       try {
         localStorage.setItem(CACHE_DB_KEY, JSON.stringify({ savedAt: Date.now(), data }));
-      } catch {
-        // Cache tidak boleh menghentikan sinkronisasi live.
-      }
+      } catch {}
     }
 
     async function fetchWithTimeout(url, options = {}) {
@@ -508,12 +508,6 @@
 
     function normalizeName(value) {
       return String(value || '').trim().toLocaleLowerCase();
-    }
-
-    function participantKey(item) {
-      return item.rowIndex != null
-        ? `row:${item.rowIndex}`
-        : `new:${normalizeName(item.nama)}`;
     }
 
     function escapeHTML(value) {
